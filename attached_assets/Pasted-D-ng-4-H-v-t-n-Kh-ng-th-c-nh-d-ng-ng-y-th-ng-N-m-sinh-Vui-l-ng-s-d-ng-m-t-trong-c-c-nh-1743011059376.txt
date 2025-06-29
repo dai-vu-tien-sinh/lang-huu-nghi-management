@@ -1,0 +1,226 @@
+Dòng 4: Họ và tên - Không thể đọc định dạng ngày tháng: Năm sinh Vui lòng sử dụng một trong các định dạng sau:
+
+DD/MM/YYYY (VD: 25/12/2023)
+YYYY-MM-DD (VD: 2023-12-25)
+Năm (VD: 2007)
+Dòng 6: Bùi Thị Tiềm - NOT NULL constraint failed: students.admission_date
+
+Dòng 7: Nguyễn T. Vân Long - NOT NULL constraint failed: students.admission_date
+
+Dòng 8: Nguyễn T. Chi Mai - NOT NULL constraint failed: students.admission_date
+
+Dòng 9: Nguyễn T. Linh Mỹ - NOT NULL constraint failed: students.admission_date
+
+Dòng 10: Trần Thị Thu - NOT NULL constraint failed: students.admission_date
+
+Dòng 11: Trịnh Thị Liên - NOT NULL constraint failed: students.admission_date
+
+Dòng 12: Phạm Thị Nga - NOT NULL constraint failed: students.admission_date
+
+Dòng 13: Vũ Thị Thu - NOT NULL constraint failed: students.admission_date
+
+Dòng 14: Lê Thị Ngọc Hân - NOT NULL constraint failed: students.admission_date
+
+Dòng 15: Nguyễn T. Thùy Linh - NOT NULL constraint failed: students.admission_date
+
+Dòng 16: Đỗ Phương Dung - NOT NULL constraint failed: students.admission_date
+
+Dòng 17: Mai Quang Vinh - NOT NULL constraint failed: students.admission_date
+
+Dòng 18: Nguyễn Hữu Hoài Nam - NOT NULL constraint failed: students.admission_date
+
+Dòng 19: Nguyễn Hải Nam - NOT NULL constraint failed: students.admission_date
+
+Dòng 20: Đỗ Hồng Hà - NOT NULL constraint failed: students.admission_date
+
+Dòng 21: Lương Thị Bích - NOT NULL constraint failed: students.admission_date
+
+Dòng 22: Mai Phương Linh - NOT NULL constraint failed: students.admission_date
+
+Dòng 23: Lê Thị Hà Vy - NOT NULL constraint failed: students.admission_date
+
+Dòng 24: Lê Tuấn Minh - NOT NULL constraint failed: students.admission_date
+
+Dòng 36: Họ và tên - Không thể đọc định dạng ngày tháng: Năm sinh Vui lòng sử dụng một trong các định dạng sau:
+
+DD/MM/YYYY (VD: 25/12/2023)
+YYYY-MM-DD (VD: 2023-12-25)
+Năm (VD: 2007)
+Dòng 38: Trần Đức Tài - NOT NULL constraint failed: students.admission_date
+
+Dòng 39: Lê Văn Đô - NOT NULL constraint failed: students.admission_date
+
+Dòng 40: Trịnh Quốc Bảo - NOT NULL constraint failed: students.admission_date
+
+Dòng 41: Hoàng Trung Kiên - NOT NULL constraint failed: students.admission_date
+
+Dòng 42: Nguyễn Hồng Việt - NOT NULL constraint failed: students.admission_date
+
+Dòng 43: Nguyễn Bá Dương - NOT NULL constraint failed: students.admission_date
+
+Dòng 44: Hoàng Minh Tuấn - NOT NULL constraint failed: students.admission_date
+
+Dòng 45: Nguyễn Tuấn Dương - NOT NULL constraint failed: students.admission_date
+
+Dòng 46: Phạm Quang Vinh - NOT NULL constraint failed: students.admission_date
+
+Dòng 47: Nguyễn Bá Hải Đăng - NOT NULL constraint failed: students.admission_date
+
+Dòng 48: Lưu Hồng Anh - NOT NULL constraint failed: students.admission_date
+
+Dòng 49: Lý Bá Đức Khánh - NOT NULL constraint failed: students.admission_date
+
+Dòng 50: Lý Văn Mưu - NOT NULL constraint failed: students.admission_date
+
+Dòng 51: Nguyễn Trọng Vũ ( Khôi) - Ngày sinh không được để trống
+
+Dòng 52: Khuất Đình Hồng Phúc - NOT NULL constraint failed: students.admission_date
+
+Dòng 53: Bùi Tất Việt - NOT NULL constraint failed: students.admission_date
+
+Dòng 54: PHạm Đức Quang - NOT NULL constraint failed: students.admission_date
+
+Dòng 55: Phạm Gia Huy - NOT NULL constraint failed: students.admission_date
+
+Dòng 56: Hoàng Tiến Đạt - NOT NULL constraint failed: students.admission_date
+
+Dòng 57: Nguyễn Vũ Anh Kiệt - NOT NULL constraint failed: students.admission_date
+
+Dòng 58: Lê Bảo Châu - NOT NULL constraint failed: students.admission_date
+
+Dòng 59: Nguyễn Việt Cường - NOT NULL constraint failed: students.admission_date
+
+Dòng 68: Họ và tên - Không thể đọc định dạng ngày tháng: Năm sinh Vui lòng sử dụng một trong các định dạng sau:
+
+DD/MM/YYYY (VD: 25/12/2023)
+YYYY-MM-DD (VD: 2023-12-25)
+Năm (VD: 2007)
+Dòng 70: Đoàn Trung Đức - NOT NULL constraint failed: students.admission_date
+
+Dòng 71: Nguyễn Văn Đức - NOT NULL constraint failed: students.admission_date
+
+Dòng 72: Nguyễn Công Hậu - NOT NULL constraint failed: students.admission_date
+
+Dòng 73: Lý Đức Giang - NOT NULL constraint failed: students.admission_date
+
+Dòng 74: Nguyễn Đức Mỵ - NOT NULL constraint failed: students.admission_date
+
+Dòng 75: Đỗ Hải Dương - NOT NULL constraint failed: students.admission_date
+
+Dòng 76: Nguyễn Hoàn Năm - NOT NULL constraint failed: students.admission_date
+
+Dòng 77: Ninh Quốc Trung - NOT NULL constraint failed: students.admission_date
+
+Dòng 78: Trần Văn Đức - NOT NULL constraint failed: students.admission_date
+
+Dòng 79: Nguyễn Văn Kiên - NOT NULL constraint failed: students.admission_date
+
+Dòng 80: Phạm Văn Ngọc - NOT NULL constraint failed: students.admission_date
+
+Dòng 81: Nguyễn Văn Anh Đức - NOT NULL constraint failed: students.admission_date
+
+Dòng 82: Nguyễn Văn Thắng - NOT NULL constraint failed: students.admission_date
+
+Dòng 83: Nguyễn Hữu Tất Thành - NOT NULL constraint failed: students.admission_date
+
+Dòng 84: Nguyễn Đức Thọ - NOT NULL constraint failed: students.admission_date
+
+Dòng 85: Vũ Viết Cường - NOT NULL constraint failed: students.admission_date
+
+Dòng 86: Nguyễn Ngọc Đức - NOT NULL constraint failed: students.admission_date
+
+Dòng 87: Nguyễn Trung Đức - NOT NULL constraint failed: students.admission_date
+
+Dòng 88: Phùng Hoài An - NOT NULL constraint failed: students.admission_date
+
+Dòng 89: Bùi Mạnh Quân - NOT NULL constraint failed: students.admission_date
+
+Dòng 90: Giao Hồng Phúc - NOT NULL constraint failed: students.admission_date
+
+Dòng 91: Vương Đình Nhất - NOT NULL constraint failed: students.admission_date
+
+Dòng 92: Hoàng Hữu Điền - NOT NULL constraint failed: students.admission_date
+
+Dòng 100: Họ và tên - Không thể đọc định dạng ngày tháng: Năm sinh Vui lòng sử dụng một trong các định dạng sau:
+
+DD/MM/YYYY (VD: 25/12/2023)
+YYYY-MM-DD (VD: 2023-12-25)
+Năm (VD: 2007)
+Dòng 102: Nguyễn Đăng Bảo Việt - NOT NULL constraint failed: students.admission_date
+
+Dòng 103: Nguyễn Thị Yến - NOT NULL constraint failed: students.admission_date
+
+Dòng 104: Hoàng Thị Hường - NOT NULL constraint failed: students.admission_date
+
+Dòng 105: Trần Thị Nguyệt Thương - NOT NULL constraint failed: students.admission_date
+
+Dòng 106: Ngụy Thị Ngọc Thu - NOT NULL constraint failed: students.admission_date
+
+Dòng 107: Nguyễn Thị Vân - NOT NULL constraint failed: students.admission_date
+
+Dòng 108: Nguyễn Thị Linh - NOT NULL constraint failed: students.admission_date
+
+Dòng 109: Phan T. Lan Hương - NOT NULL constraint failed: students.admission_date
+
+Dòng 110: Đặng Thị Nụ - NOT NULL constraint failed: students.admission_date
+
+Dòng 111: Phạm Văn Mạnh - NOT NULL constraint failed: students.admission_date
+
+Dòng 112: Đỗ Quang Hưng - NOT NULL constraint failed: students.admission_date
+
+Dòng 113: Bùi Thị Ngọc Tú - NOT NULL constraint failed: students.admission_date
+
+Dòng 114: Nguyễn Thị Mai Ánh - NOT NULL constraint failed: students.admission_date
+
+Dòng 115: Nguyễn Bảo Long - NOT NULL constraint failed: students.admission_date
+
+Dòng 116: Nguyễn Tiến Hưng - NOT NULL constraint failed: students.admission_date
+
+Dòng 117: Tần Thị Ngân - NOT NULL constraint failed: students.admission_date
+
+Dòng 118: Bế Thị Hằng - NOT NULL constraint failed: students.admission_date
+
+Dòng 119: Lê Văn Hiếu - NOT NULL constraint failed: students.admission_date
+
+Dòng 120: Vũ Thị Oanh - NOT NULL constraint failed: students.admission_date
+
+Dòng 132: Họ và tên - Không thể đọc định dạng ngày tháng: Năm sinh Vui lòng sử dụng một trong các định dạng sau:
+
+DD/MM/YYYY (VD: 25/12/2023)
+YYYY-MM-DD (VD: 2023-12-25)
+Năm (VD: 2007)
+Dòng 134: Vũ Thị Bình - NOT NULL constraint failed: students.admission_date
+
+Dòng 135: Thế Bảo Trâm - NOT NULL constraint failed: students.admission_date
+
+Dòng 136: Nguyễn Thị Chung - NOT NULL constraint failed: students.admission_date
+
+Dòng 137: Hà Thị Dung - NOT NULL constraint failed: students.admission_date
+
+Dòng 138: Bùi Thị Hóa - NOT NULL constraint failed: students.admission_date
+
+Dòng 139: Lê Thị Linh - NOT NULL constraint failed: students.admission_date
+
+Dòng 140: Nguyễn Thị Nhật Lệ - NOT NULL constraint failed: students.admission_date
+
+Dòng 141: Nguyễn Quỳnh Anh - NOT NULL constraint failed: students.admission_date
+
+Dòng 142: Lưu Quỳnh Chi - NOT NULL constraint failed: students.admission_date
+
+Dòng 143: Đinh Văn Hải - NOT NULL constraint failed: students.admission_date
+
+Dòng 144: Trần Sơn Hiếu - NOT NULL constraint failed: students.admission_date
+
+Dòng 145: Nguyễn Gia Bảo - NOT NULL constraint failed: students.admission_date
+
+Dòng 146: Đinh Thị Hương - NOT NULL constraint failed: students.admission_date
+
+Dòng 147: Chu Thị Kim Ngân - NOT NULL constraint failed: students.admission_date
+
+Dòng 148: Đoàn Thị Thanh - NOT NULL constraint failed: students.admission_date
+
+Dòng 149: Nguyễn T. Phương Hòa - NOT NULL constraint failed: students.admission_date
+
+Dòng 150: Hoàng Phương Hà - NOT NULL constraint failed: students.admission_date
+
+Dòng 151: Trần Thị Mỹ Duyên - NOT NULL constraint failed: students.admission_date

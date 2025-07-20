@@ -457,6 +457,11 @@ def perform_manual_backup():
     """Perform manual backup"""
     return backup_service.manual_backup()
 
+# Compatibility methods for existing code
+def create_backup():
+    """Create a backup - compatibility method"""
+    return backup_service.perform_backup()
+
 if __name__ == "__main__":
     # For testing
     if initialize_backup_service():

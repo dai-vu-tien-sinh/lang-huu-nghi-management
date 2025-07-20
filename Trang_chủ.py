@@ -92,10 +92,10 @@ def main():
         st.markdown("""
         <div style="padding-top: 10px;">
             <h1 style="color: #274B9F; margin: 0; font-size: 1.8rem; font-weight: 600;">
-                Hệ thống quản lý dữ liệu Làng Hữu Nghị
+                Trang chủ
             </h1>
             <h2 style="color: #666; margin: 5px 0 0 0; font-size: 1.1rem; font-weight: 400;">
-                Lang Huu Nghi Management System
+                Hệ thống quản lý dữ liệu Làng Hữu Nghị
             </h2>
         </div>
         """, unsafe_allow_html=True)

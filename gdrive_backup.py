@@ -438,6 +438,10 @@ class GoogleDriveBackup:
         """Perform immediate manual backup"""
         logger.info("Performing manual backup...")
         return self.perform_backup()
+    
+    def create_backup(self):
+        """Create a backup - compatibility method for existing code"""
+        return self.perform_backup()
 
 # Global backup instance
 backup_service = GoogleDriveBackup()

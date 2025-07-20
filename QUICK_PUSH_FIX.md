@@ -1,40 +1,76 @@
-# Quick Push for Streamlit Cloud Fix
+# Quick Git Push Commands - Standard Template
 
-## Manual Commands for Shell
+## Standard Push Commands (Use Every Time)
 
-Since Replit is blocking automated Git operations, run these commands manually in the Shell:
-
-### 1. Clear Git locks
 ```bash
-rm -f .git/index.lock .git/config.lock
+# Clear any Git locks
+rm -f .git/index.lock .git/config.lock .git/objects/*/tmp_obj_*
 killall git 2>/dev/null || true
+
+# Add all changed files
+git add .
+
+# Commit with descriptive message
+git commit -m "Your commit message here"
+
+# Push to GitHub
+git push origin main
 ```
 
-### 2. Add and commit the fix
+## For Vietnamese Navigation Fix
+
 ```bash
+# Clear Git locks
+rm -f .git/index.lock .git/config.lock .git/objects/*/tmp_obj_*
+killall git 2>/dev/null || true
+
+# Add specific files for navigation fix
 git add streamlit_app.py
-git commit -m "Fix Streamlit Cloud entry point - resolve ModuleNotFoundError
+git add "🏠_Trang_chủ.py" 
+git add STREAMLIT_CLOUD_ENTRY_FIX.md
+git add QUICK_PUSH_FIX.md
+git add gdrive_backup.py
+git add GOOGLE_OAUTH_SETUP.md
 
-- Updated streamlit_app.py to properly import Trang_chủ.py
-- Resolved ModuleNotFoundError: No module named 'main'
-- Streamlit Cloud deployment should now work correctly"
+# Commit navigation and backup fixes
+git commit -m "Fix Vietnamese navigation and Google Drive backup
+
+- Navigation now shows '🏠 Trang chữ' instead of 'streamlit app'
+- Created Vietnamese homepage file with proper naming
+- Fixed Google Drive backup create_backup method error  
+- Added comprehensive OAuth setup guide
+- Streamlit Cloud ready for deployment"
+
+# Push to GitHub
+git push origin main
 ```
 
-### 3. Push with token authentication
+## Quick Template for Future Updates
+
 ```bash
-git push https://ghp_YOUR_TOKEN@github.com/dai-vu-tien-sinh/lang-huu-nghi-management.git main
+# Standard 3-step process:
+rm -f .git/index.lock .git/config.lock .git/objects/*/tmp_obj_*; killall git 2>/dev/null || true
+git add .; git commit -m "Your update description"  
+git push origin main
 ```
 
-## What This Fix Does
-- Resolves the `ModuleNotFoundError: No module named 'main'` in Streamlit Cloud
-- Allows `streamlit_app.py` to properly load your Vietnamese homepage (`Trang_chủ.py`)
-- Streamlit Cloud will auto-redeploy once pushed
+## Common Commit Messages
 
-## Expected Result
-After pushing:
-1. Streamlit Cloud automatically detects the change
-2. Redeploys your application 
-3. The Vietnamese management system loads successfully
-4. No more module import errors
+```bash
+# Feature additions
+git commit -m "Add new feature: [description]"
 
-Your Làng Hữu Nghị management system will be live on Streamlit Cloud!
+# Bug fixes  
+git commit -m "Fix: [issue description]"
+
+# UI/UX improvements
+git commit -m "Improve: [interface element]"
+
+# Database changes
+git commit -m "Update database: [changes made]"
+
+# Documentation
+git commit -m "Update documentation: [what was added]"
+```
+
+Save these commands and use them whenever you need to push changes to GitHub!

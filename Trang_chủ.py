@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+Trang chủ - Hệ thống quản lý dữ liệu Làng Hữu Nghị
+Main homepage for the Vietnamese management system
+"""
+
 import streamlit as st
 from datetime import datetime
 from auth import init_auth, check_auth, login, logout
@@ -6,8 +12,6 @@ from supabase_keepalive import SupabaseKeepAlive
 from translations import get_text, get_current_language, set_language
 from utils import apply_theme
 import json
-
-
 
 def handle_keep_alive_request():
     """Handle Supabase keep-alive API requests without displaying navigation"""
@@ -45,18 +49,21 @@ def handle_keep_alive_request():
         st.json(error_response)
         print(f"Keep-alive API error at {datetime.now()}: {str(e)}")
 
-# Set page config first
+# Set page config first with custom navigation
 st.set_page_config(
-    page_title="Hệ thống quản lý dữ liệu Làng Hữu Nghị",
+    page_title="Trang chủ",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items=None
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 def render_sidebar():
-    """Render empty sidebar - navigation removed per user request"""
-    # Sidebar navigation completely disabled - user requested removal of menu items
+    """Render completely empty sidebar as per user preference"""
     pass
 
 def main():
@@ -169,8 +176,6 @@ def main():
             st.markdown("- Quản lý thông tin lớp học")
             st.markdown("- Phân công giáo viên")
             st.markdown("- Theo dõi tiến độ học tập")
-        
-
 
         # Render sidebar based on user preferences
         render_sidebar()

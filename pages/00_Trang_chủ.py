@@ -49,13 +49,17 @@ def handle_keep_alive_request():
         st.json(error_response)
         print(f"Keep-alive API error at {datetime.now()}: {str(e)}")
 
-# Set page config first
+# Set page config first with custom navigation
 st.set_page_config(
-    page_title="Trang chủ - Hệ thống quản lý dữ liệu Làng Hữu Nghị",
+    page_title="Trang chủ",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items=None
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 def render_sidebar():

@@ -14,7 +14,6 @@ The system emphasizes granular user permissions, multilingual support, and adapt
 - i18n internationalization support
 
 ## Recent Changes
-- **2025-07-20**: FIXED Vietnamese navigation display - made Trang chủ the actual default homepage by moving content to streamlit_app.py, eliminating duplicate navigation entries and ensuring Vietnamese homepage loads by default
 - **2025-07-20**: IMPLEMENTED Google Drive backup for Streamlit Cloud - created cloud authentication system with OAuth flow, environment variable support, and web-based authentication interface
 - **2025-07-20**: FIXED Streamlit Cloud deployment error - made Google Drive backup functionality optional, removed credentials.json dependency for cloud deployment
 - **2025-07-20**: CREATED complete Supabase deployment package - migration script with sample data, step-by-step deployment guide, and quick 10-minute setup instructions

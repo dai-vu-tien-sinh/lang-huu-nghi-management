@@ -638,13 +638,22 @@ def import_data_section():
             st.error(traceback.format_exc())
 
 def check_google_auth_status():
-    """Check if Google Drive authentication is properly configured"""
+    """Check if Google Drive authentication is properly configured - safe for cloud deployment"""
     try:
+        # Check for environment-based auth first (cloud deployment)
+        google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
+        google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+        
+        if google_client_id and google_client_secret:
+            # Cloud-based authentication available
+            return {'authenticated': True, 'status': 'Cloud Environment', 'method': 'environment'}
+        
+        # Check for local file-based auth (development)
         if not os.path.exists('credentials.json'):
-            return {'authenticated': False, 'error': 'Missing credentials.json'}
+            return {'authenticated': False, 'error': 'Google Drive backup not configured', 'method': 'file'}
         
         if not os.path.exists('token.json'):
-            return {'authenticated': False, 'error': 'Not authenticated yet'}
+            return {'authenticated': False, 'error': 'Not authenticated yet', 'method': 'file'}
         
         # Try to load and verify token
         from google.oauth2.credentials import Credentials
@@ -653,56 +662,91 @@ def check_google_auth_status():
         creds = Credentials.from_authorized_user_file('token.json', ['https://www.googleapis.com/auth/drive.file'])
         
         if creds and creds.valid:
-            return {'authenticated': True, 'status': 'Active'}
+            return {'authenticated': True, 'status': 'Active', 'method': 'file'}
         elif creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
                 with open('token.json', 'w') as token:
                     token.write(creds.to_json())
-                return {'authenticated': True, 'status': 'Refreshed'}
+                return {'authenticated': True, 'status': 'Refreshed', 'method': 'file'}
             except Exception as e:
-                return {'authenticated': False, 'error': f'Token refresh failed: {e}'}
+                return {'authenticated': False, 'error': f'Token refresh failed: {e}', 'method': 'file'}
         else:
-            return {'authenticated': False, 'error': 'Invalid token'}
+            return {'authenticated': False, 'error': 'Invalid token', 'method': 'file'}
             
+    except ImportError:
+        return {'authenticated': False, 'error': 'Google libraries not available', 'method': 'none'}
     except Exception as e:
-        return {'authenticated': False, 'error': f'Authentication check failed: {e}'}
+        return {'authenticated': False, 'error': f'Authentication check failed: {e}', 'method': 'unknown'}
 
 def database_management_section():
-    """Google Drive backup management section optimized for Supabase"""
+    """Google Drive backup management section - cloud deployment safe"""
     st.subheader("💾 Sao lưu Google Drive (Supabase)")
     
-    # Check if credentials exist
-    creds_exist = os.path.exists('credentials.json')
+    # Check authentication status safely
+    auth_status = check_google_auth_status()
     
-    if not creds_exist:
-        st.warning("⚠️ Chưa cấu hình Google Drive")
-        st.info("""
-        **Để kích hoạt sao lưu Google Drive, bạn cần:**
-        1. Tạo project trên Google Cloud Console
-        2. Kích hoạt Google Drive API
-        3. Tạo OAuth 2.0 credentials
-        4. Tải file credentials.json và đặt vào thư mục gốc
-        
-        📋 Xem hướng dẫn chi tiết trong file `GDRIVE_BACKUP_SETUP.md`
-        """)
-        
-        # Show setup helper
-        st.markdown("---")
-        st.markdown("### 🔧 Trợ giúp cài đặt")
-        if st.button("📋 Xem hướng dẫn chi tiết"):
+    if not auth_status['authenticated']:
+        if auth_status.get('method') == 'environment':
+            st.info("🔧 Cấu hình Google Drive trong biến môi trường")
             st.info("""
-            **Hướng dẫn nhanh:**
-            1. Vào https://console.cloud.google.com/
-            2. Tạo project mới
-            3. Enable Google Drive API  
-            4. Tạo OAuth 2.0 credentials (Desktop application)
-            5. Tải file JSON và đổi tên thành credentials.json
-            6. Đặt file vào thư mục gốc của project
+            **Để kích hoạt sao lưu Google Drive trên Streamlit Cloud:**
+            1. Thêm GOOGLE_CLIENT_ID vào Secrets
+            2. Thêm GOOGLE_CLIENT_SECRET vào Secrets
+            3. Khởi động lại ứng dụng
+            
+            💡 Tính năng sao lưu là tùy chọn - ứng dụng hoạt động bình thường không cần nó
+            """)
+        else:
+            st.info("ℹ️ Sao lưu Google Drive chưa được cấu hình")
+            st.info("""
+            **Tính năng sao lưu Google Drive là tùy chọn**
+            
+            Ứng dụng hoạt động hoàn toàn bình thường không cần tính năng này.
+            Dữ liệu của bạn đã được lưu trữ an toàn trên Supabase PostgreSQL.
+            
+            💡 Chỉ cần cấu hình nếu bạn muốn sao lưu thêm lên Google Drive
             """)
         return
     
-    # Show backup system status
+    # Show backup system status 
+    st.success(f"✅ Google Drive kết nối thành công ({auth_status['status']})")
+    
+    # Show backup management interface
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🔄 Sao lưu ngay", help="Tạo bản sao lưu database ngay lập tức"):
+            try:
+                if BACKUP_AVAILABLE:
+                    backup = GoogleDriveBackup()
+                    with st.spinner("Đang tạo bản sao lưu..."):
+                        result = backup.create_backup()
+                        if result:
+                            st.success("✅ Sao lưu thành công lên Google Drive!")
+                        else:
+                            st.error("❌ Sao lưu thất bại")
+                else:
+                    st.error("❌ Hệ thống sao lưu không khả dụng")
+            except Exception as e:
+                st.error(f"❌ Lỗi sao lưu: {str(e)}")
+    
+    with col2:
+        if st.button("📋 Xem lịch sử sao lưu", help="Xem các bản sao lưu trước đó"):
+            try:
+                if BACKUP_AVAILABLE:
+                    backup = GoogleDriveBackup()
+                    backups = backup.list_backups()
+                    if backups:
+                        st.info(f"📦 Có {len(backups)} bản sao lưu trên Google Drive")
+                        for backup_file in backups[:5]:  # Show latest 5
+                            st.write(f"- {backup_file.get('name', 'Unknown')} ({backup_file.get('createdTime', 'Unknown time')})")
+                    else:
+                        st.info("📭 Chưa có bản sao lưu nào")
+                else:
+                    st.error("❌ Hệ thống sao lưu không khả dụng")
+            except Exception as e:
+                st.error(f"❌ Không thể tải lịch sử: {str(e)}")
     col1, col2 = st.columns(2)
     
     with col1:

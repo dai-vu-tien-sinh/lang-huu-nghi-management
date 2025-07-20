@@ -442,6 +442,44 @@ class GoogleDriveBackup:
     def create_backup(self):
         """Create a backup - compatibility method for existing code"""
         return self.perform_backup()
+    
+    def list_backups(self):
+        """List all backup files in Google Drive"""
+        try:
+            if not self.service:
+                if not self.authenticate():
+                    return []
+            
+            if not self.backup_folder_id:
+                if not self.create_backup_folder():
+                    return []
+            
+            # Get all backup files in the folder
+            results = self.service.files().list(
+                q=f"parents in '{self.backup_folder_id}' and name contains 'lang_huu_nghi_backup'",
+                orderBy='createdTime desc',
+                spaces='drive',
+                fields='files(id,name,createdTime,size)'
+            ).execute()
+            
+            files = results.get('files', [])
+            
+            # Format the file list for display
+            backup_list = []
+            for file in files:
+                backup_info = {
+                    'id': file['id'],
+                    'name': file['name'],
+                    'created': file.get('createdTime', 'Unknown'),
+                    'size': file.get('size', 'Unknown')
+                }
+                backup_list.append(backup_info)
+            
+            return backup_list
+            
+        except Exception as e:
+            logger.error(f"Failed to list backups: {e}")
+            return []
 
 # Global backup instance
 backup_service = GoogleDriveBackup()
@@ -465,6 +503,10 @@ def perform_manual_backup():
 def create_backup():
     """Create a backup - compatibility method"""
     return backup_service.perform_backup()
+
+def list_backups():
+    """List all backups - compatibility method"""
+    return backup_service.list_backups()
 
 if __name__ == "__main__":
     # For testing

@@ -1,57 +1,127 @@
-# Google OAuth Setup Guide - Missing Redirect URIs
+# How to Get Google Client ID and Client Secret
 
-## Problem
-You don't see "Authorized redirect URIs" section in Google Cloud Console OAuth configuration.
+## Step 1: Access Google Cloud Console
 
-## Solution
-The "Authorized redirect URIs" section only appears for **Web application** type OAuth clients, not for **Desktop application** type.
+1. **Go to**: https://console.cloud.google.com/
+2. **Sign in** with your Google account
+3. **Create a new project** (or select existing):
+   - Click the project dropdown at the top
+   - Click "New Project"
+   - Name: `lang-huu-nghi-backup`
+   - Click "Create"
 
-### Option 1: Convert to Web Application (Recommended)
-1. Go to [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials)
-2. Find your OAuth 2.0 client ID
-3. Click **Delete** to remove the current client
-4. Click **+ CREATE CREDENTIALS** > **OAuth 2.0 Client ID**
-5. Choose **Application type: Web application**
-6. Name it "Lang Huu Nghi Backup - Web"
-7. Add these Authorized redirect URIs:
-   - `http://localhost:8080/`
-   - `http://localhost:8080`
-   - `urn:ietf:wg:oauth:2.0:oob`
-8. Click **Create**
-9. Download the new credentials.json
-10. Replace the old credentials.json in your project
+## Step 2: Enable Google Drive API
 
-### Option 2: Use OAuth Playground (Faster)
-Since your current setup is Desktop application type, use the OAuth Playground method:
+1. **Go to**: APIs & Services → Library
+2. **Search for**: "Google Drive API"
+3. **Click**: Google Drive API
+4. **Click**: "Enable"
+5. **Wait**: For API to be enabled (30 seconds)
 
-1. **Go to**: https://developers.google.com/oauthplayground/
-2. **Configure credentials** (click ⚙️ settings):
-   - Check ✅ "Use your own OAuth credentials"
-   - Client ID: `YOUR_GOOGLE_CLIENT_ID` (get from Google Cloud Console)
-   - Client Secret: `YOUR_GOOGLE_CLIENT_SECRET` (get from Google Cloud Console)
-3. **Select APIs**:
-   - Choose "Drive API v3" 
-   - Select: `https://www.googleapis.com/auth/drive.file`
-   - Click "Authorize APIs"
-4. **Sign in** with your Google account and grant permissions
-5. **Exchange code**: Click "Exchange authorization code for tokens"
-6. **Copy tokens**: You'll get `access_token` and `refresh_token`
-7. **Use in app**: Go to the backup section, click "🔧 Xác thực thủ công", expand OAuth Playground section, and paste tokens
+## Step 3: Create OAuth 2.0 Credentials
 
-### Option 3: Create New Web Application Client
-If you want to keep the existing client:
+### 3.1 Configure OAuth Consent Screen
+1. **Go to**: APIs & Services → OAuth consent screen
+2. **Choose**: External (for public use)
+3. **Fill required fields**:
+   - App name: `Làng Hữu Nghị Management`
+   - User support email: Your email
+   - Developer contact: Your email
+4. **Click**: Save and Continue
+5. **Skip**: Scopes (click Save and Continue)
+6. **Add test users** (your email address)
+7. **Click**: Save and Continue
 
-1. Go to [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials)
-2. Click **+ CREATE CREDENTIALS** > **OAuth 2.0 Client ID** 
-3. Select **Web application**
-4. Add Authorized redirect URIs:
-   - `http://localhost:8080/`
-   - `http://localhost:8080` 
-   - `urn:ietf:wg:oauth:2.0:oob`
-5. Download credentials.json and update your project
+### 3.2 Create Credentials
+1. **Go to**: APIs & Services → Credentials
+2. **Click**: "+ Create Credentials"
+3. **Choose**: "OAuth 2.0 Client IDs"
+4. **Application type**: Web application
+5. **Name**: `Lang Huu Nghi Backup Client`
 
-## Why This Happens
-- **Desktop application**: No redirect URIs needed (uses local server)
-- **Web application**: Requires specific redirect URIs for security
+### 3.3 Configure Authorized URIs
+**Authorized JavaScript origins**:
+```
+https://your-app-name.streamlit.app
+```
 
-The OAuth Playground method (Option 2) is fastest since it works with your current Desktop application setup.
+**Authorized redirect URIs**:
+```
+https://your-app-name.streamlit.app
+https://your-app-name.streamlit.app/
+```
+
+Replace `your-app-name` with your actual Streamlit app name.
+
+6. **Click**: Create
+
+## Step 4: Get Your Credentials
+
+After clicking Create, you'll see a popup with:
+
+```
+Client ID: 1234567890-abcdefghijklmnop.apps.googleusercontent.com
+Client Secret: GOCSPX-abcdefghijklmnopqrstuvwxyz
+```
+
+**Copy both values** - you'll need them for Streamlit Cloud.
+
+## Step 5: Add to Streamlit Cloud
+
+1. **Go to**: Your Streamlit Cloud dashboard
+2. **Find your app**: `lang-huu-nghi-management`
+3. **Click**: ⋮ → Settings
+4. **Go to**: Secrets tab
+5. **Add these lines**:
+
+```toml
+# Your existing database secrets...
+DATABASE_URL = "your-supabase-url"
+# ... other database config ...
+
+# Add these new Google Drive secrets:
+GOOGLE_CLIENT_ID = "1234567890-abcdefghijklmnop.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "GOCSPX-abcdefghijklmnopqrstuvwxyz"
+GOOGLE_REDIRECT_URI = "https://your-app-name.streamlit.app"
+```
+
+6. **Click**: Save
+
+## Step 6: Test in Your App
+
+1. **Wait**: 2-3 minutes for Streamlit to redeploy
+2. **Go to**: Your app → System Management
+3. **Find**: Google Drive Backup section
+4. **Click**: "Lấy URL xác thực" (Get Auth URL)
+5. **Follow**: Authentication flow
+
+## Example with Real Values
+
+If your Streamlit app is `lang-huu-nghi.streamlit.app`, your settings would be:
+
+**In Google Cloud Console**:
+- Authorized origins: `https://lang-huu-nghi.streamlit.app`
+- Redirect URIs: `https://lang-huu-nghi.streamlit.app`
+
+**In Streamlit Secrets**:
+```toml
+GOOGLE_CLIENT_ID = "123456789-abc123def456.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "GOCSPX-YourActualSecretHere"
+GOOGLE_REDIRECT_URI = "https://lang-huu-nghi.streamlit.app"
+```
+
+## Troubleshooting
+
+**"redirect_uri_mismatch" error**:
+- Ensure URLs in Google Console exactly match your Streamlit app URL
+- Include both with and without trailing slash
+
+**"This app isn't verified" warning**:
+- Click "Advanced" → "Go to [app name] (unsafe)" 
+- This is normal for personal/testing apps
+
+**Can't find the APIs section**:
+- Make sure you've selected the correct project in the dropdown
+- Try refreshing the Google Cloud Console page
+
+Your Google Drive backup will work once these credentials are configured!

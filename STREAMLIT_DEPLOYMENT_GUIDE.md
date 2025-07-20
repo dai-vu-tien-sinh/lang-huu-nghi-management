@@ -40,7 +40,6 @@ anthropic>=0.3.0
 ```toml
 [server]
 headless = true
-address = "0.0.0.0"
 port = 8501
 enableCORS = false
 enableXsrfProtection = false

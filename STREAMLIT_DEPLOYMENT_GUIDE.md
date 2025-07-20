@@ -67,7 +67,7 @@ Ensure your main file is named `Trang_chủ.py` (already done).
 ### 2.2 Configure Deployment
 1. **Repository**: `dai-vu-tien-sinh/lang-huu-nghi-management`
 2. **Branch**: `main`
-3. **Main file path**: `Trang_chủ.py`
+3. **Main file path**: `streamlit_app.py` (entry point that loads Trang_chủ.py)
 4. **App URL**: Choose a custom name like `lang-huu-nghi-management`
 
 ### 2.3 Add Environment Variables

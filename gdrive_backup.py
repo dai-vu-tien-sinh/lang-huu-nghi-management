@@ -44,10 +44,40 @@ class GoogleDriveBackup:
         self.max_backups = 10
         
     def authenticate(self):
-        """Authenticate with Google Drive API"""
+        """Authenticate with Google Drive API - supports both local and cloud deployment"""
         creds = None
         
-        # Token file stores the user's access and refresh tokens
+        # Try cloud authentication first (Streamlit Cloud)
+        try:
+            from gdrive_cloud_auth import CloudGoogleAuth
+            cloud_auth = CloudGoogleAuth()
+            
+            if cloud_auth.has_credentials():
+                # Use cloud-based authentication
+                creds = cloud_auth.get_stored_credentials()
+                if creds and creds.valid:
+                    logger.info("Using cloud-based Google Drive authentication")
+                elif creds and creds.expired and creds.refresh_token:
+                    try:
+                        creds.refresh(Request())
+                        cloud_auth.store_credentials(creds)
+                        logger.info("Cloud token refreshed successfully")
+                    except Exception as e:
+                        logger.error(f"Failed to refresh cloud credentials: {e}")
+                        creds = None
+                
+                if creds:
+                    try:
+                        self.service = build('drive', 'v3', credentials=creds)
+                        logger.info("Successfully authenticated with Google Drive (cloud)")
+                        return True
+                    except Exception as e:
+                        logger.error(f"Failed to build Google Drive service (cloud): {e}")
+        
+        except ImportError:
+            logger.info("Cloud authentication not available, falling back to file-based")
+        
+        # Fallback to local file-based authentication
         if os.path.exists('token.json'):
             creds = Credentials.from_authorized_user_file('token.json', self.SCOPES)
         
@@ -65,9 +95,7 @@ class GoogleDriveBackup:
                     creds = None
             
             if not creds:
-                logger.error("No valid credentials found. Please run authentication setup first.")
-                print("\n❌ Google Drive authentication required!")
-                print("🔧 Please use the manual authentication option in the web interface.")
+                logger.error("No valid credentials found. Please authenticate first.")
                 return False
             
             # Save the credentials for the next run

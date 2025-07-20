@@ -688,24 +688,27 @@ def database_management_section():
     
     if not auth_status['authenticated']:
         if auth_status.get('method') == 'environment':
-            st.info("🔧 Cấu hình Google Drive trong biến môi trường")
+            st.warning("🔧 Cần xác thực Google Drive")
             st.info("""
-            **Để kích hoạt sao lưu Google Drive trên Streamlit Cloud:**
-            1. Thêm GOOGLE_CLIENT_ID vào Secrets
-            2. Thêm GOOGLE_CLIENT_SECRET vào Secrets
-            3. Khởi động lại ứng dụng
-            
-            💡 Tính năng sao lưu là tùy chọn - ứng dụng hoạt động bình thường không cần nó
+            **Google Drive Credentials đã được cấu hình, cần xác thực:**
+            1. Client ID và Secret đã có trong environment variables
+            2. Cần thực hiện xác thực OAuth một lần
+            3. Sau đó sao lưu sẽ hoạt động tự động
             """)
+            
+            # Show authentication interface for cloud deployment
+            show_cloud_auth_interface()
+            
         else:
             st.info("ℹ️ Sao lưu Google Drive chưa được cấu hình")
             st.info("""
-            **Tính năng sao lưu Google Drive là tùy chọn**
+            **Để kích hoạt sao lưu Google Drive trên Streamlit Cloud:**
+            1. Thêm GOOGLE_CLIENT_ID vào Secrets (từ Google Cloud Console)
+            2. Thêm GOOGLE_CLIENT_SECRET vào Secrets
+            3. Thêm GOOGLE_REDIRECT_URI="https://YOUR_APP.streamlit.app" (tuỳ chọn)
+            4. Khởi động lại ứng dụng và xác thực
             
-            Ứng dụng hoạt động hoàn toàn bình thường không cần tính năng này.
-            Dữ liệu của bạn đã được lưu trữ an toàn trên Supabase PostgreSQL.
-            
-            💡 Chỉ cần cấu hình nếu bạn muốn sao lưu thêm lên Google Drive
+            💡 Tính năng sao lưu là tùy chọn nhưng rất hữu ích cho backup bổ sung
             """)
         return
     
@@ -747,6 +750,78 @@ def database_management_section():
                     st.error("❌ Hệ thống sao lưu không khả dụng")
             except Exception as e:
                 st.error(f"❌ Không thể tải lịch sử: {str(e)}")
+
+def show_cloud_auth_interface():
+    """Show Google Drive authentication interface for cloud deployment"""
+    from gdrive_cloud_auth import CloudGoogleAuth
+    
+    cloud_auth = CloudGoogleAuth()
+    
+    st.markdown("### 🔐 Xác thực Google Drive")
+    
+    # Check if already authenticated
+    if cloud_auth.is_authenticated():
+        st.success("✅ Đã xác thực Google Drive thành công!")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔄 Làm mới xác thực"):
+                cloud_auth.clear_credentials()
+                st.rerun()
+        
+        with col2:
+            if st.button("❌ Huỷ xác thực"):
+                cloud_auth.clear_credentials()
+                st.success("Đã huỷ xác thực Google Drive")
+                st.rerun()
+        
+        return True
+    
+    # Show authentication steps
+    st.info("""
+    **Các bước xác thực:**
+    1. Nhấn "Lấy URL xác thực" bên dưới
+    2. Sao chép URL và mở trong tab mới
+    3. Đăng nhập Google và cho phép quyền truy cập
+    4. Sao chép mã xác thực từ URL hoặc trang phản hồi
+    5. Dán mã xác thực vào ô bên dưới
+    """)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🔗 Lấy URL xác thực"):
+            auth_url = cloud_auth.get_authorization_url()
+            if auth_url:
+                st.success("✅ URL xác thực đã được tạo!")
+                st.code(auth_url, language="text")
+                st.info("Sao chép URL trên và mở trong tab mới để xác thực")
+            else:
+                st.error("❌ Không thể tạo URL xác thực. Kiểm tra GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET")
+    
+    with col2:
+        auth_code = st.text_input(
+            "Mã xác thực",
+            placeholder="Dán mã xác thực từ Google tại đây",
+            help="Sau khi xác thực với Google, sao chép mã từ URL hoặc trang kết quả"
+        )
+        
+        if st.button("✅ Xác thực") and auth_code:
+            with st.spinner("Đang xác thực..."):
+                credentials = cloud_auth.exchange_code_for_token(auth_code.strip())
+                
+                if credentials:
+                    success = cloud_auth.store_credentials(credentials)
+                    if success:
+                        st.success("🎉 Xác thực Google Drive thành công!")
+                        st.balloons()
+                        st.rerun()
+                    else:
+                        st.error("❌ Lỗi lưu thông tin xác thực")
+                else:
+                    st.error("❌ Mã xác thực không hợp lệ hoặc đã hết hạn")
+    
+    return False
     col1, col2 = st.columns(2)
     
     with col1:

@@ -14,6 +14,7 @@ The system emphasizes granular user permissions, multilingual support, and adapt
 - i18n internationalization support
 
 ## Recent Changes
+- **2025-07-20**: CREATED detailed Supabase connection setup guide with exact steps for database configuration, environment variables, and schema creation
 - **2025-07-20**: FIXED Streamlit Cloud entry point - updated streamlit_app.py to properly import and execute Trang_chủ.py, resolving ModuleNotFoundError
 - **2025-07-20**: FIXED Streamlit Cloud port configuration - updated config.toml to use port 8501 for proper cloud deployment health checks
 - **2025-07-20**: CREATED comprehensive deployment guides for Supabase database and Streamlit Cloud hosting with step-by-step instructions

@@ -14,6 +14,8 @@ The system emphasizes granular user permissions, multilingual support, and adapt
 - i18n internationalization support
 
 ## Recent Changes
+- **2025-07-20**: CREATED comprehensive deployment guides for Supabase database and Streamlit Cloud hosting with step-by-step instructions
+- **2025-07-20**: PREPARED deployment files - streamlit_requirements.txt, .streamlit/config.toml, and complete deployment checklist
 - **2025-07-20**: RESOLVED GitHub security violations - identified credentials.json and token.json as source of OAuth secrets, created final push solution with complete credential removal
 - **2025-07-20**: FIXED security violation - removed hardcoded Google OAuth credentials, replaced with environment variables for secure deployment
 - **2025-07-20**: FIXED .gitignore to include database - removed *.db exclusion so lang_huu_nghi.db will be pushed to GitHub for deployment

@@ -1,0 +1,157 @@
+# Hệ thống quản lý dữ liệu Làng Hữu Nghị
+
+## Overview
+Comprehensive Streamlit application for multilingual data management in educational and organizational contexts, with advanced user role-based access control and intelligent record processing.
+
+The system emphasizes granular user permissions, multilingual support, and adaptive administrative tools for diverse organizational needs.
+
+## Key Technologies
+- Python 3.11
+- Streamlit framework
+- Role-based authentication
+- Plotly for interactive visualizations
+- SQLAlchemy for database interactions
+- i18n internationalization support
+
+## Recent Changes
+- **2025-07-20**: RESOLVED GitHub security violations - identified credentials.json and token.json as source of OAuth secrets, created final push solution with complete credential removal
+- **2025-07-20**: FIXED security violation - removed hardcoded Google OAuth credentials, replaced with environment variables for secure deployment
+- **2025-07-20**: FIXED .gitignore to include database - removed *.db exclusion so lang_huu_nghi.db will be pushed to GitHub for deployment
+- **2025-07-20**: READY FOR GITHUB PUSH - created comprehensive documentation and instructions for pushing database and code to GitHub repository
+- **2025-07-20**: PREPARED database for version control - lang_huu_nghi.db (485KB) contains complete sample data including Nguyễn Văn Học with 4 attached documents
+- **2025-07-20**: CHANGED document handling approach - removed embedded documents from Word reports, now exports all attached documents separately for individual download when generating reports
+- **2025-07-20**: CONNECTED project to GitHub repository: https://github.com/dai-vu-tien-sinh/lang-huu-nghi-management
+- **2025-07-20**: ENHANCED Word reports with comprehensive document previews - now includes visual representations for images, PDFs, Word docs, Excel spreadsheets, and PowerPoint presentations with actual file content
+- **2025-07-20**: FIXED Word report generation errors - removed undefined variables, added proper datetime imports, cleaned up duplicate sections
+- **2025-07-20**: RESOLVED Google OAuth verification error 403 - app in testing mode requires test user addition in Google Cloud Console
+- **2025-07-20**: UPDATED to Web Application OAuth client type (250486741229-epmh1eq1d5q2olhdg01qv5a9ivvkthkb) for OAuth Playground compatibility
+- **2025-07-20**: CREATED OAUTH_VERIFICATION_FIX.md guide for handling Google app verification requirements
+- **2025-07-20**: FIXED Google OAuth authentication issues - provided OAuth playground method for manual token generation due to redirect URI mismatch
+- **2025-07-20**: CREATED fix_google_oauth.py script with comprehensive authentication troubleshooting and manual setup instructions
+- **2025-07-20**: OPTIMIZED Google Drive backup system for Supabase hosting - replaced SQLite file copying with PostgreSQL SQL dump generation
+- **2025-07-20**: ENHANCED backup compatibility with Supabase PostgreSQL database using custom SQL export instead of pg_dump
+- **2025-07-20**: IMPROVED backup system to create both SQL dumps and metadata fallbacks for reliable Supabase data backup
+- **2025-07-20**: ADDED SUPABASE_BACKUP_GUIDE.md with detailed instructions for PostgreSQL backup optimization
+- **2025-07-20**: UPDATED backup file formats from .db to .sql/.json for better Supabase integration
+- **2025-07-19**: MOVED Google Drive backup functionality to system management page with automatic weekly scheduling
+- **2025-07-19**: IMPLEMENTED comprehensive backup interface with manual backup, automatic scheduling (Sundays 2AM), and 10-backup limit
+- **2025-07-19**: REMOVED Google Drive backup functionality from homepage per user request
+- **2025-07-19**: FIXED house information display issue - extracted and matched 82 students from Excel file with correct house assignments (T3, T4, T5, T6), updated database with authentic house data from user's Excel file
+- **2025-07-19**: REMOVED user management tab from spreadsheet data management section per user request
+- **2025-07-19**: CLEANED up manage_users_spreadsheet and save_users_changes functions no longer needed
+- **2025-07-19**: SIMPLIFIED spreadsheet management to only include students, veterans, and medical records
+- **2025-07-19**: LOCKED user management access for admin tổng (administrative) accounts - only main admin account can access user management
+- **2025-07-19**: RESTRICTED user management to main admin account only (username: 'admin') excluding all other admin and administrative accounts
+- **2025-07-19**: REMOVED counselor and nurse roles from system per user request
+- **2025-07-19**: UPDATED role selections to exclude counselor and nurse from available options
+- **2025-07-19**: ADDED password viewing capability for admin users in user management section with security warnings and role-based access control
+- **2025-07-19**: IMPLEMENTED get_user_passwords method in Database class to support admin password viewing functionality
+- **2025-07-19**: ENHANCED user management interface with password visibility toggle and security warnings for sensitive data handling
+- **2025-07-19**: FINALIZED comprehensive Word report generation with all student information including medical history and teacher notes sections always displayed (even when empty)
+- **2025-07-19**: REPLACED AI-generated summary with handwritten note sections using blank lines for manual completion per user request  
+- **2025-07-19**: FIXED field mapping issues in reports - corrected gender field display and changed all "ID bệnh nhân" labels to "ID học sinh"
+- **2025-07-19**: ENHANCED comprehensive Word report generation to include ALL student information: ID, complete personal details, enhanced class history with teacher and notes columns, detailed teacher notes with categories and importance levels, medical records, psychological evaluations, documents, and comprehensive conclusion summaries
+- **2025-07-19**: IMPLEMENTED complete student notes system in class management with categorized notes (Học tập, Hành vi, Sức khỏe, Gia đình, Khác), importance marking, role-based permissions for viewing/deleting, and teacher attribution
+- **2025-07-19**: ADDED student_notes database table with proper relationships and comprehensive database methods for note management, retrieval, and deletion
+- **2025-07-19**: UPGRADED class history tracking in reports to include teacher names and detailed notes columns for complete academic progression documentation
+- **2025-07-19**: COMPLETELY REMOVED all 5 medical status fields (health_status, academic_status, psychological_status, illness_history, treatment_history) from student and veteran database schema and all code references per user request - all medical information management now redirected to dedicated medical page
+- **2025-07-19**: FIXED authentication session state initialization issues - added init_auth() calls to prevent "authenticated" attribute errors
+- **2025-07-19**: CLEANED database schema by removing all status columns from students and veterans tables using ALTER TABLE DROP COLUMN commands
+- **2025-07-19**: UPDATED Veteran model constructor to match new database structure without status fields
+- **2025-07-19**: FIXED statistics charts section to prevent IndexError by removing all status-related charts, keeping only class distribution
+- **2025-07-19**: CORRECTED report generation to use new field structure (health_on_admission, initial_characteristics) instead of old status fields
+- **2025-07-19**: IMPLEMENTED smart house detection and assignment for Excel imports - automatically detects multiple houses in files and assigns students to correct houses based on proximity and pattern recognition
+- **2025-07-19**: REORDERED system management tabs per user request: user management, spreadsheet management, Excel import, backup & restore
+- **2025-07-19**: MERGED admin functionality into system management page as requested by user
+- **2025-07-19**: REORGANIZED page order: system management now appears directly under homepage
+- **2025-07-19**: RENAMED pages to follow new order: 01_Quản_lý_Hệ_thống, 02_Quản_lý_hồ_sơ, 03_Y_tế, 04_Lớp_học
+- **2025-07-19**: ADDED comprehensive student document management to profile management page with upload, download, and delete capabilities
+- **2025-07-19**: INCLUDED detailed instructions and guidelines for document management system usage
+- **2025-07-19**: ENHANCED Excel export to include ALL student and veteran fields - comprehensive data export with complete information
+- **2025-07-19**: IMPLEMENTED dynamic page access control based on user roles - pages now only appear for authorized users
+- **2025-07-19**: MADE advanced search section collapsible in class management page for cleaner interface
+- **2025-07-19**: COMPLETELY REMOVED all navigation menu items from sidebar - system now has completely empty sidebar per user request
+- **2025-07-19**: REMOVED separate search and print page (05_Tìm_kiếm_và_In.py) as requested by user
+- **2025-07-19**: INTEGRATED advanced search functionality directly into profile management page with dropdown interface
+- **2025-07-19**: FIXED Veteran model compatibility issues with SQLite database structure (11 columns vs expected parameters)
+- **2025-07-19**: CONSOLIDATED all search features into profile management with role-based permissions
+- **2025-07-19**: ENHANCED search with Excel/CSV export capabilities and Word report generation
+- **2025-07-19**: TRANSFORMED manual database management into safe spreadsheet-style interface with separate tabs for users, students, veterans, and medical records
+- **2025-07-19**: ADDED patient ID display prominently in profile management and search results for better patient identification 
+- **2025-07-19**: REPLACED dangerous SQL query interface with controlled spreadsheet editing capabilities with proper data validation
+- **2025-07-19**: ENHANCED system security by removing direct SQL execution and implementing safe CRUD operations through spreadsheet interface
+- **2025-07-19**: UPDATED PostgreSQL query syntax in save functions to use proper %s parameter placeholders instead of ? placeholders
+- **2025-07-19**: FIXED medical records date display bug - corrected field positions to use record[6] for date instead of record[3] (diagnosis field)
+- **2025-07-19**: Updated medical records interface to show proper Vietnamese date format (DD/MM/YYYY) in expander titles and detailed views
+- **2025-07-19**: Corrected medical records field mapping: diagnosis=record[3], treatment=record[4], date=record[6], notes=record[7]
+- **2025-07-19**: Simplified administration page by removing statistics, reports, and interface customization tabs - now only contains user management functionality
+- **2025-07-19**: Merged statistics functionality into profile management page as new "📊 Thống kê và báo cáo" tab with comprehensive charts and data export
+- **2025-07-19**: Added separate "📤 Xuất dữ liệu" tab in profile management with Excel export capabilities matching user's format requirements
+- **2025-07-19**: Fixed Plotly chart compatibility issues by using proper update_layout method instead of update_xaxis
+- **2025-07-19**: Enhanced Excel export functionality with professional formatting, proper headers, merged cells, and auto-adjusted column widths
+- **2025-07-19**: Completely removed old statistics page (07_Thống_kê.py) and updated navigation system references
+- **2025-07-19**: Fixed kaleido package compatibility by downgrading to version 0.2.1 for proper PDF/chart generation
+- **2025-07-19**: Added comprehensive manual database management to system management page with view, edit, delete, and custom SQL query capabilities
+- **2025-07-19**: Reorganized navigation structure per user request: moved database management to system management, removed profile printing from search page, renamed system management to "Manual System Management"
+- **2025-07-19**: Removed all English translation support, simplified system to Vietnamese-only mode per user request
+- **2025-07-19**: Eliminated language selector and English translation dictionaries from translations.py
+- **2025-07-19**: Streamlined navigation system to use only Vietnamese names with proper diacritical marks
+- **2025-07-19**: Renamed ALL page files to use proper Vietnamese diacritical marks for accurate navigation display
+- **2025-07-19**: Updated page filenames: 01_Quản_trị.py, 03_Quản_lý_hồ_sơ.py, 03_Y_tế.py, 04_Lớp_học.py, 05_Tìm_kiếm_và_In.py, 06_Quản_lý_Hệ_thống.py, 07_Thống_kê.py
+- **2025-07-19**: Created Trang_chủ.py as new main page with proper Vietnamese naming
+- **2025-07-19**: Updated all database references and session state variables to match new Vietnamese filenames
+- **2025-07-19**: Modified navigation system to properly display Vietnamese page names with diacritical marks
+- **2025-07-19**: Converted psychology page to comprehensive medical records management page
+- **2025-07-19**: Updated medical records functionality to handle both students and veterans with proper filtering and grouping
+- **2025-07-19**: Removed old medical page (02_Y_te.py) and consolidated medical functionality into single module
+- **2025-07-19**: Enhanced medical records with diagnosis, treatment plans, medications, and follow-up date tracking
+- **2025-07-19**: Updated database navigation to reflect medical page consolidation
+- **2025-07-19**: Added "Đặc điểm sơ bộ của bệnh nhân/cựu chiến binh khi vào làng" field to both Student and Veteran models with full CRUD support
+- **2025-07-19**: Updated database schema to include initial_characteristics column for both students and veterans tables
+- **2025-07-19**: Enhanced record management forms to include initial characteristics input field with proper Vietnamese labeling
+- **2025-07-19**: Modified database methods (add_student, update_student, add_veteran, update_veteran) to handle new initial characteristics field
+- **2025-07-19**: Added comprehensive class information to final reports including class distribution charts and statistics
+- **2025-07-19**: Enhanced PDF report generation to include student class assignments and class distribution data
+- **2025-07-19**: Fixed database error by adding missing get_documents method with proper filtering capabilities
+- **2025-07-19**: Improved UI styling with enhanced error message visibility and consistent button theming
+- **2025-07-19**: Made password visibility button smaller and square-shaped as requested
+- **2025-07-19**: Simplified field label from "Thông tin nhà chữ T" to concise "Nhà" across all forms for cleaner interface
+- **2025-07-19**: Enhanced Excel import functionality to automatically extract and assign house information from file headers to imported student records
+- **2025-07-19**: Optimized house detection system for organization's houses (T2, T3, T4, T5, T6) with smart pattern recognition, multiple house detection, dropdown selection, and custom house support
+- **2025-07-19**: Updated system title throughout application to "Hệ thống quản lý dữ liệu Làng Hữu Nghị" with bilingual support and professional styling
+- **2025-07-17**: Implemented comprehensive dark mode support and individual user theme preferences
+- **2025-07-17**: Added dark_mode column to users table for persistent theme preferences
+- **2025-07-17**: Enhanced theme system with separate light/dark mode color palettes for all themes
+- **2025-07-17**: Updated theme selector to include dark mode toggle and user preference saving
+- **2025-07-17**: Forced theme application across all pages with improved CSS styling
+- **2025-07-17**: Merged document management functionality into search and print page for unified interface
+- **2025-07-17**: Integrated Supabase Keep-Alive service to prevent database pausing (completely hidden from users)
+- **2025-07-17**: Added comprehensive Word document report generation functionality
+- **2025-07-17**: Enhanced T-house information display linkage between class assignments and student lists
+- **2025-07-17**: Fixed critical database query errors and updated schema compatibility
+- **2025-04-10**: Implemented comprehensive role-based permissions system
+- **2025-04-10**: Updated all user roles to have access to statistics, search, and print functionality (except family users)
+- **2025-04-10**: Merged administrative role with admin to have full permissions
+- **2025-04-10**: Enhanced search and print functionality to respect user role permissions
+
+## User Role Permissions
+- **Admin (main account only)**: Full access to all features including user management
+- **Admin (other accounts)**: Full access to all features except user management
+- **Administrative**: Full access to all features except user management
+- **Teacher**: Class management, students, search students/psychological evaluations, statistics, print, data management
+- **Doctor**: Medical records, students, veterans, search medical records, statistics, print, data management
+- **Family**: View own child's information and general statistics only
+
+## Project Architecture
+- `main.py`: Main application entry point with navigation
+- `auth.py`: Role-based authentication and permission system
+- `database.py`: Database operations and data management
+- `models.py`: Data model definitions
+- `pages/`: Individual page modules for different features
+- `translations.py`: Internationalization support
+- `themes.py`: UI theme management
+
+## Deployment Notes
+- Currently running on Replit with PostgreSQL database
+- User requesting deployment to Supabase
+- All environment variables configured for PostgreSQL connection

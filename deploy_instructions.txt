@@ -1,0 +1,43 @@
+SUPABASE DEPLOYMENT - QUICK STEPS
+
+STEP 1: SUPABASE SETUP
+1. Go to supabase.com → Create new project
+2. Set project name: lang-huu-nghi-management
+3. Choose Singapore region, set strong password
+4. Wait 2-3 minutes for project creation
+
+STEP 2: DATABASE SETUP
+1. Open SQL Editor in Supabase dashboard
+2. Copy/paste content from supabase_schema.sql file
+3. Click Run to create all tables
+
+STEP 3: GET CONNECTION STRING
+1. Go to Settings → Database
+2. Copy "Transaction pooler" connection string
+3. Replace [YOUR-PASSWORD] with your actual password
+4. Save this string - you'll need it for deployment
+
+STEP 4: GITHUB REPOSITORY
+1. Create new GitHub repository: lang-huu-nghi-management
+2. Upload all project files including:
+   - streamlit_app.py (main entry point)
+   - All .py files (auth.py, database.py, main.py, etc.)
+   - pages/ folder with all page files
+   - .streamlit/config.toml
+   - packages.txt
+   - streamlit_requirements.txt (rename to requirements.txt)
+
+STEP 5: STREAMLIT CLOUD DEPLOYMENT
+1. Go to share.streamlit.io
+2. Connect GitHub account
+3. Select your repository
+4. Set main file: streamlit_app.py
+5. In Advanced settings → Secrets, add:
+   DATABASE_URL = "your_supabase_connection_string_here"
+
+STEP 6: TEST DEPLOYMENT
+- Login with: admin / admin123
+- Verify all pages load correctly
+- Test database connectivity
+
+That's it! Your app will be live at a .streamlit.app URL.

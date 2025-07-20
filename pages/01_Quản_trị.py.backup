@@ -1,0 +1,57 @@
+import streamlit as st
+from auth import check_auth, check_role
+from database import Database
+from reports import ReportGenerator
+from utils import show_success, show_error, apply_theme
+from translations import get_text
+
+def render():
+    # Apply theme from session state
+    # apply_theme()  # Disabled - using Streamlit defaults
+
+    check_auth()
+    check_role(['admin'])
+
+    st.title(get_text("admin.title", "Bảng Điều Khiển Quản Trị"))
+
+    db = Database()
+    report_gen = ReportGenerator()
+
+    tab1 = st.tabs([
+        "Quản Lý Người Dùng"
+    ])[0]
+
+    with tab1:
+        st.subheader(get_text("admin.add_user", "Thêm Người Dùng Mới"))
+        with st.form("add_user"):
+            username = st.text_input(get_text("admin.username", "Tên đăng nhập"))
+            password = st.text_input(get_text("admin.password", "Mật khẩu"), type="password")
+            role = st.selectbox(get_text("admin.role", "Vai trò"), [
+                "admin", "doctor", "teacher", "counselor",
+                "administrative", "nurse", "family"
+            ])
+            full_name = st.text_input(get_text("admin.full_name", "Họ và tên"))
+
+            # Show student selection for family role
+            if role == "family":
+                students = db.get_students()
+                student_options = [f"{s.id} - {s.full_name}" for s in students]
+                student_selection = st.selectbox(
+                    get_text("admin.select_student", "Chọn học sinh"),
+                    [""] + student_options,
+                    format_func=lambda x: x.split(" - ")[1] if x else get_text("admin.select_student", "Chọn học sinh")
+                )
+                student_id = int(student_selection.split(" - ")[0]) if student_selection else None
+            else:
+                student_id = None
+
+            if st.form_submit_button(get_text("admin.add_user_button", "Thêm người dùng")):
+                if db.add_user(username, password, role, full_name, family_student_id=student_id):
+                    show_success(get_text("admin.add_success", "Thêm người dùng thành công!"))
+                else:
+                    show_error(get_text("admin.username_exists", "Tên đăng nhập đã tồn tại"))
+
+
+
+if __name__ == "__main__":
+    render()

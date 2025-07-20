@@ -1,0 +1,58 @@
+remote: Resolving deltas: 100% (4/4), done.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:     
+remote:       —— Google OAuth Client ID ————————————————————————————
+remote:        locations:
+remote:          - commit: 6bdf34f90db81b1e9f07c15c1c2887f87a9711cd
+remote:            path: create_simple_oauth_form.py:23
+remote:          - commit: 6bdf34f90db81b1e9f07c15c1c2887f87a9711cd
+remote:            path: pages/01_Quản_lý_Hệ_thống.py:783
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/dai-vu-tien-sinh/lang-huu-nghi-management/security/secret-scanning/unblock-secret/308Cuz8zY4AfdzeHruxZi43HHfD
+remote:     
+remote:     
+remote:       —— Google OAuth Client Secret ————————————————————————
+remote:        locations:
+remote:          - commit: 6bdf34f90db81b1e9f07c15c1c2887f87a9711cd
+remote:            path: create_simple_oauth_form.py:24
+remote:          - commit: 6bdf34f90db81b1e9f07c15c1c2887f87a9711cd
+remote:            path: pages/01_Quản_lý_Hệ_thống.py:784
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/dai-vu-tien-sinh/lang-huu-nghi-management/security/secret-scanning/unblock-secret/308Cv1ej7uhYP4TBUN00snUi0Tx
+remote:     
+remote:     
+remote:       —— Google OAuth Client ID ————————————————————————————
+remote:        locations:
+remote:          - commit: 6bdf34f90db81b1e9f07c15c1c2887f87a9711cd
+remote:            path: GOOGLE_OAUTH_SETUP.md:30
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/dai-vu-tien-sinh/lang-huu-nghi-management/security/secret-scanning/unblock-secret/308Cv0krXJ45DWHFM5yQAqkGmen
+remote:     
+remote:     
+remote:       —— Google OAuth Client Secret ————————————————————————
+remote:        locations:
+remote:          - commit: 6bdf34f90db81b1e9f07c15c1c2887f87a9711cd
+remote:            path: GOOGLE_OAUTH_SETUP.md:31
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/dai-vu-tien-sinh/lang-huu-nghi-management/security/secret-scanning/unblock-secret/308O8wRHNdfVlJrNxjEaKHqIOzY
+remote:     
+remote: 
+remote: 
+To https://github.com/dai-vu-tien-sinh/lang-huu-nghi-management.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/dai-vu-tien-sinh/lang-huu-nghi-management.git'

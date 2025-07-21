@@ -14,6 +14,7 @@ The system emphasizes granular user permissions, multilingual support, and adapt
 - i18n internationalization support
 
 ## Recent Changes
+- **2025-07-20**: IMPLEMENTED Service Account solution for Google Drive backup - created comprehensive alternative to OAuth that avoids redirect URI issues completely, works immediately with Streamlit Cloud
 - **2025-07-20**: FIXED Google OAuth redirect URI issue - identified localhost:8080 redirect problem, created comprehensive fix guide for production Streamlit Cloud deployment
 - **2025-07-20**: COMPLETED all Google Drive backup fixes - added missing create_backup and list_backups methods, resolved all 'object has no attribute' errors, system shows proper authentication prompts
 - **2025-07-20**: FIXED Vietnamese navigation display - replaced streamlit_app.py content to show "Trang chủ" instead of "streamlit app" in sidebar navigation

@@ -717,11 +717,15 @@ def database_management_section():
             st.info("ℹ️ Sao lưu Google Drive chưa được cấu hình")
             st.info("""
             **Để kích hoạt sao lưu Google Drive trên Streamlit Cloud:**
-            1. Thêm GOOGLE_CLIENT_ID vào Secrets (từ Google Cloud Console)
-            2. Thêm GOOGLE_CLIENT_SECRET vào Secrets
-            3. Thêm GOOGLE_REDIRECT_URI="https://YOUR_APP.streamlit.app" (tuỳ chọn)
-            4. Khởi động lại ứng dụng và xác thực
+            1. Tạo Google Cloud Project tại console.cloud.google.com
+            2. Enable Google Drive API
+            3. Tạo OAuth 2.0 credentials (Web application)
+            4. Thêm authorized redirect URI: https://your-app.streamlit.app
+            5. Thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET vào Streamlit Secrets
+            6. Thêm email của bạn vào Test users trong OAuth consent screen
+            7. Restart app và hoàn thành OAuth authentication
             
+            📋 Xem file GOOGLE_OAUTH_TROUBLESHOOTING.md để khắc phục sự cố
             💡 Tính năng sao lưu là tùy chọn nhưng rất hữu ích cho backup bổ sung
             """)
         return

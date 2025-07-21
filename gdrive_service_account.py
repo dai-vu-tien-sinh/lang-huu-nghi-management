@@ -133,14 +133,16 @@ class GoogleDriveServiceAccount:
                 try:
                     backup_content += f"\n-- Table: {table}\n"
                     
-                    # Get table data
-                    rows = db.connection.execute(f"SELECT * FROM {table}").fetchall()
+                    # Get table data  
+                    rows = db.execute_query(f"SELECT * FROM {table}")
                     
                     if rows:
                         # Get column names
-                        result = db.connection.execute(f"SELECT * FROM {table} LIMIT 1")
-                        first_row = result.fetchone()
-                        columns = list(first_row.keys()) if first_row and hasattr(first_row, 'keys') else []
+                        first_row = db.execute_query(f"SELECT * FROM {table} LIMIT 1")
+                        if first_row:
+                            columns = list(first_row[0].keys()) if first_row and hasattr(first_row[0], 'keys') else []
+                        else:
+                            columns = []
                         
                         if columns:
                             backup_content += f"-- Columns: {', '.join(columns)}\n"

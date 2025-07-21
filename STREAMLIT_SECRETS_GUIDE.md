@@ -1,97 +1,103 @@
-# Streamlit Cloud Secrets Setup Guide
+# Hướng dẫn cấu hình Streamlit Secrets cho Google Drive
 
-## Step 1: Get Your Supabase Connection Details
-
-1. **Go to your Supabase project dashboard**
-2. **Navigate**: Settings → Database
-3. **Find**: Connection string section
-4. **Copy these values**:
-
+## Vấn đề hiện tại
 ```
-Host: aws-0-ap-southeast-1.pooler.supabase.com
-Database name: postgres
-Port: 6543
-User: postgres.abcdefghijklmnop
-Password: [your-password-from-setup]
+Service Account JSON Invalid
+GOOGLE_SERVICE_ACCOUNT_JSON trong Streamlit Secrets có vấn đề
 ```
 
-## Step 2: Configure Streamlit Cloud Secrets
+## Nguyên nhân
+- JSON bị thiếu hoặc không đúng format
+- Copy/paste bị lỗi khi thêm vào Streamlit Secrets
+- Thiếu các field bắt buộc trong Service Account JSON
 
-1. **Go to**: https://share.streamlit.io/
-2. **Find your app**: `lang-huu-nghi-management`
-3. **Click**: Three dots (⋮) → Settings
-4. **Navigate**: Secrets tab
+## Giải pháp từng bước
 
-## Step 3: Add Your Database Configuration
+### Bước 1: Tạo Service Account (nếu chưa có)
+1. Vào: https://console.cloud.google.com/
+2. Tạo project mới hoặc chọn project hiện có
+3. **IAM & Admin → Service Accounts**
+4. **CREATE SERVICE ACCOUNT**
+   - Name: `lang-huu-nghi-backup`
+   - Description: `Google Drive backup service`
+5. **Keys → ADD KEY → Create new key → JSON**
+6. Download file JSON
 
-**Copy this template and replace with your actual values:**
+### Bước 2: Enable Google Drive API
+1. **APIs & Services → Library**
+2. Tìm "Google Drive API"
+3. Click **ENABLE**
 
-```toml
-# Database connection - REQUIRED
-DATABASE_URL = "postgresql://postgres.YOUR_USER_ID:YOUR_PASSWORD@YOUR_HOST.supabase.co:6543/postgres"
-PGDATABASE = "postgres"
-PGHOST = "YOUR_HOST.supabase.co"
-PGPORT = "6543"
-PGUSER = "postgres.YOUR_USER_ID"
-PGPASSWORD = "YOUR_PASSWORD"
+### Bước 3: Chia sẻ Google Drive folder
+1. Tạo folder: "Lang Huu Nghi Database Backups"
+2. Right-click → Share
+3. Thêm email service account (từ JSON: `client_email`)
+4. Quyền: **Editor**
+
+### Bước 4: Cấu hình Streamlit Secrets
+1. Vào Streamlit Cloud app dashboard
+2. **Settings → Secrets**
+3. Thêm secret mới:
+
+**Key:** `GOOGLE_SERVICE_ACCOUNT_JSON`
+
+**Value:** (toàn bộ nội dung file JSON)
+```json
+{
+  "type": "service_account",
+  "project_id": "your-project-id",
+  "private_key_id": "1234567890abcdef",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\n-----END PRIVATE KEY-----\n",
+  "client_email": "lang-huu-nghi-backup@your-project.iam.gserviceaccount.com",
+  "client_id": "123456789012345678901",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/lang-huu-nghi-backup%40your-project.iam.gserviceaccount.com"
+}
 ```
 
-## Step 4: Real Example
+## Lưu ý quan trọng
 
-If your Supabase shows:
-- Host: `aws-0-ap-southeast-1.pooler.supabase.com`
-- User: `postgres.abcdefghijklmnop`
-- Password: `MySecurePass123`
+### ❌ Lỗi thường gặp:
+- **Thiếu dấu ngoặc:** Phải bắt đầu `{` và kết thúc `}`
+- **Escape characters:** `\n` trong private_key phải được giữ nguyên
+- **Trailing comma:** Không có dấu phẩy thừa ở cuối
+- **Quote marks:** Tất cả strings phải có dấu ngoặc kép
 
-Then paste this:
+### ✅ Cách kiểm tra:
+1. Copy JSON vào online validator: https://jsonlint.com/
+2. Đảm bảo có đủ các field bắt buộc:
+   - `type`: "service_account"
+   - `project_id`: string
+   - `private_key`: string (có \\n)
+   - `client_email`: email ending với .iam.gserviceaccount.com
 
-```toml
-DATABASE_URL = "postgresql://postgres.abcdefghijklmnop:MySecurePass123@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
-PGDATABASE = "postgres"
-PGHOST = "aws-0-ap-southeast-1.pooler.supabase.com"
-PGPORT = "6543"
-PGUSER = "postgres.abcdefghijklmnop"
-PGPASSWORD = "MySecurePass123"
+### 🔧 Test trong app:
+1. Sau khi cập nhật secrets, restart Streamlit app
+2. Vào **System Management → Google Drive Backup**
+3. Nhấn **"Test JSON Format"** để kiểm tra
+4. Nếu thành công, nhấn **"Sao lưu ngay"**
+
+## Kết quả mong đợi
+
+**Trước khi sửa:**
+```
+🔧 Service Account JSON không hợp lệ
+❌ Sao lưu thất bại
 ```
 
-## Step 5: Save and Deploy
-
-1. **Click**: "Save"
-2. **Wait**: 2-3 minutes for automatic redeployment
-3. **Visit**: Your app URL
-4. **Test**: Login with admin/admin123
-
-## Optional Services (Add if Needed)
-
-```toml
-# Google services for backup (optional)
-GOOGLE_CLIENT_ID = "your-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "your-client-secret"
-
-# Email notifications (optional)
-SENDGRID_API_KEY = "SG.your-sendgrid-key"
-
-# SMS notifications (optional)
-TWILIO_ACCOUNT_SID = "ACyour-account-sid"
-TWILIO_AUTH_TOKEN = "your-auth-token"
-TWILIO_PHONE_NUMBER = "+1234567890"
+**Sau khi sửa:**
+```
+✅ Google Drive đã kết nối: Service Account Ready
+✅ Sao lưu thành công lên Google Drive!
 ```
 
-## Troubleshooting
+## Backup không cần OAuth
 
-### App Won't Start
-- Check DATABASE_URL format is correct
-- Verify password doesn't contain special characters
-- Ensure all environment variables are set
-
-### Connection Errors
-- Confirm Supabase project is active (not paused)
-- Double-check host, user, and password values
-- Make sure database tables exist (run migration script)
-
-### Authentication Issues
-- Verify admin user exists in users table
-- Check user credentials: admin/admin123
-- Confirm role permissions are set correctly
-
-Your Vietnamese management system will be live once the secrets are configured!
+Service Account có ưu điểm:
+- ✅ Không cần OAuth flow
+- ✅ Không có redirect URI issues  
+- ✅ Hoạt động ngay lập tức
+- ✅ Phù hợp với production
+- ✅ Tự động backup theo lịch

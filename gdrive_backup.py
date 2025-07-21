@@ -52,27 +52,39 @@ class GoogleDriveBackup:
             from gdrive_cloud_auth import CloudGoogleAuth
             cloud_auth = CloudGoogleAuth()
             
-            if cloud_auth.has_credentials():
-                # Use cloud-based authentication
-                creds = cloud_auth.get_stored_credentials()
-                if creds and creds.valid:
-                    logger.info("Using cloud-based Google Drive authentication")
-                elif creds and creds.expired and creds.refresh_token:
-                    try:
-                        creds.refresh(Request())
-                        cloud_auth.store_credentials(creds)
-                        logger.info("Cloud token refreshed successfully")
-                    except Exception as e:
-                        logger.error(f"Failed to refresh cloud credentials: {e}")
-                        creds = None
-                
-                if creds:
-                    try:
-                        self.service = build('drive', 'v3', credentials=creds)
-                        logger.info("Successfully authenticated with Google Drive (cloud)")
-                        return True
-                    except Exception as e:
-                        logger.error(f"Failed to build Google Drive service (cloud): {e}")
+            # Check if we have environment variables but no stored credentials
+            google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
+            google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+            
+            if google_client_id and google_client_secret:
+                if cloud_auth.has_credentials():
+                    # Use cloud-based authentication
+                    creds = cloud_auth.get_stored_credentials()
+                    if creds and creds.valid:
+                        logger.info("Using cloud-based Google Drive authentication")
+                    elif creds and creds.expired and creds.refresh_token:
+                        try:
+                            creds.refresh(Request())
+                            cloud_auth.store_credentials(creds)
+                            logger.info("Cloud token refreshed successfully")
+                        except Exception as e:
+                            logger.error(f"Failed to refresh cloud credentials: {e}")
+                            creds = None
+                    
+                    if creds:
+                        try:
+                            self.service = build('drive', 'v3', credentials=creds)
+                            logger.info("Successfully authenticated with Google Drive (cloud)")
+                            return True
+                        except Exception as e:
+                            logger.error(f"Failed to build Google Drive service (cloud): {e}")
+                else:
+                    # Environment variables are set but no OAuth token yet
+                    logger.info("Google Drive credentials configured but OAuth authentication required")
+                    logger.info("Please complete OAuth flow in System Management page")
+                    return False
+            else:
+                logger.info("Google Drive environment variables not configured")
         
         except ImportError:
             logger.info("Cloud authentication not available, falling back to file-based")

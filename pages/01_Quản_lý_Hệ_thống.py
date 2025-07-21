@@ -645,8 +645,17 @@ def check_google_auth_status():
         google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
         
         if google_client_id and google_client_secret:
-            # Cloud-based authentication available
-            return {'authenticated': True, 'status': 'Cloud Environment', 'method': 'environment'}
+            # Check if OAuth token exists
+            try:
+                from gdrive_cloud_auth import CloudGoogleAuth
+                cloud_auth = CloudGoogleAuth()
+                
+                if cloud_auth.has_credentials() and cloud_auth.is_authenticated():
+                    return {'authenticated': True, 'status': 'Cloud Environment - Authenticated', 'method': 'environment'}
+                else:
+                    return {'authenticated': False, 'status': 'Cloud Environment - OAuth Required', 'method': 'environment'}
+            except:
+                return {'authenticated': False, 'status': 'Cloud Environment - OAuth Required', 'method': 'environment'}
         
         # Check for local file-based auth (development)
         if not os.path.exists('credentials.json'):
@@ -691,9 +700,14 @@ def database_management_section():
             st.warning("🔧 Cần xác thực Google Drive")
             st.info("""
             **Google Drive Credentials đã được cấu hình, cần xác thực:**
-            1. Client ID và Secret đã có trong environment variables
-            2. Cần thực hiện xác thực OAuth một lần
-            3. Sau đó sao lưu sẽ hoạt động tự động
+            1. ✅ Client ID và Secret đã có trong environment variables
+            2. ⏳ Cần thực hiện xác thực OAuth một lần
+            3. ✅ Sau đó sao lưu sẽ hoạt động tự động
+            
+            📝 **Các bước tiếp theo:**
+            - Nhấn "Lấy URL xác thực" bên dưới
+            - Hoàn thành OAuth flow với Google
+            - Hệ thống sao lưu sẽ hoạt động ngay lập tức
             """)
             
             # Show authentication interface for cloud deployment

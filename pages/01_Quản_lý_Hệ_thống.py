@@ -756,18 +756,35 @@ def database_management_section():
                                 if test_backup.authenticate():
                                     st.success("🎉 Google Drive API working perfectly!")
                                     st.success("Service Account authentication successful!")
+                                    
+                                    # Show direct enable link
+                                    st.markdown(f"""
+                                    **✅ Ready for backup!** Your setup is correct.
+                                    
+                                    **Quick Links:**
+                                    - [Enable Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com?project={parsed.get('project_id')})
+                                    - [Create Google Drive folder](https://drive.google.com/) and share with: `{parsed.get('client_email')}`
+                                    """)
                                 else:
-                                    st.warning("⚠️ Authentication failed - likely API not enabled")
-                                    st.info("""
-                                    **Next steps:**
-                                    1. Go to: https://console.cloud.google.com/
-                                    2. Select project: lang-huu-nghi-backup
-                                    3. APIs & Services → Library → Google Drive API → ENABLE
-                                    4. Create Google Drive folder and share with service account
+                                    st.warning("⚠️ Google Drive API not enabled")
+                                    st.markdown(f"""
+                                    **🔧 Enable API now:**
+                                    1. [Click here to enable Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com?project={parsed.get('project_id')})
+                                    2. Click the blue **ENABLE** button
+                                    3. Wait 1-2 minutes for propagation
+                                    4. Return here and test again
+                                    
+                                    **After enabling API:**
+                                    - Create folder "Lang Huu Nghi Database Backups" on Google Drive
+                                    - Share with: `{parsed.get('client_email')}`
+                                    - Permission: Editor
                                     """)
                             except Exception as e:
                                 st.warning(f"⚠️ API test failed: {str(e)}")
-                                st.info("Enable Google Drive API in Google Cloud Console")
+                                project_id = parsed.get('project_id', 'your-project')
+                                st.markdown(f"""
+                                [Enable Google Drive API for {project_id}](https://console.cloud.google.com/apis/library/drive.googleapis.com?project={project_id})
+                                """)
                     except json.JSONDecodeError as e:
                         st.error(f"❌ JSON không hợp lệ: {str(e)}")
                         st.error("Vui lòng kiểm tra và sửa format JSON")

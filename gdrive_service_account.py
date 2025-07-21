@@ -141,15 +141,27 @@ class GoogleDriveServiceAccount:
                 try:
                     backup_content += f"\n-- Table: {table}\n"
                     
-                    # Get table data  
-                    rows = db.execute_query(f"SELECT * FROM {table}")
-                    
-                    if rows:
-                        # Get column names
-                        first_row = db.execute_query(f"SELECT * FROM {table} LIMIT 1")
-                        if first_row:
-                            columns = list(first_row[0].keys()) if first_row and hasattr(first_row[0], 'keys') else []
-                        else:
+                    # Get table data using database class method
+                    if table == 'students':
+                        rows = [(s.id, s.name, s.birth_date, s.gender, s.address, s.phone, s.email, s.class_name, s.house, s.health_on_admission, s.initial_characteristics) for s in db.get_all_students()]
+                        columns = ['id', 'name', 'birth_date', 'gender', 'address', 'phone', 'email', 'class_name', 'house', 'health_on_admission', 'initial_characteristics']
+                    elif table == 'veterans':
+                        rows = [(v.id, v.name, v.birth_date, v.gender, v.address, v.phone, v.email, v.unit, v.rank, v.health_on_admission, v.initial_characteristics) for v in db.get_all_veterans()]
+                        columns = ['id', 'name', 'birth_date', 'gender', 'address', 'phone', 'email', 'unit', 'rank', 'health_on_admission', 'initial_characteristics']
+                    elif table == 'users':
+                        rows = [(u.id, u.username, u.password, u.role, u.theme, u.dark_mode) for u in db.get_all_users()]
+                        columns = ['id', 'username', 'password', 'role', 'theme', 'dark_mode']
+                    elif table == 'medical_records':
+                        records = db.get_medical_records()
+                        rows = [(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]) for r in records]
+                        columns = ['id', 'patient_id', 'patient_type', 'diagnosis', 'treatment', 'medication', 'date', 'notes']
+                    else:
+                        # Fallback for other tables
+                        try:
+                            rows = db.execute_query(f"SELECT * FROM {table}")
+                            columns = []
+                        except:
+                            rows = []
                             columns = []
                         
                         if columns:

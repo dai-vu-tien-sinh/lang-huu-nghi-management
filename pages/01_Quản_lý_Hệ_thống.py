@@ -711,6 +711,48 @@ def database_management_section():
             st.warning("🔧 Service Account JSON không hợp lệ")
             st.error("GOOGLE_SERVICE_ACCOUNT_JSON trong Streamlit Secrets có vấn đề")
             
+            st.info("""
+            **Kiểm tra GOOGLE_SERVICE_ACCOUNT_JSON:**
+            1. Đảm bảo toàn bộ nội dung JSON được copy chính xác
+            2. JSON phải bắt đầu bằng { và kết thúc bằng }
+            3. Không có dấu ngoặc kép thừa hoặc ký tự lạ
+            4. Download lại JSON file từ Google Cloud Console nếu cần
+            
+            **Format đúng:**
+            ```
+            {
+              "type": "service_account",
+              "project_id": "your-project",
+              "private_key_id": "...",
+              "private_key": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n",
+              "client_email": "...@....iam.gserviceaccount.com",
+              ...
+            }
+            ```
+            """)
+            
+            # Add JSON validator
+            if st.button("🔍 Test JSON Format"):
+                service_account_json = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
+                if service_account_json:
+                    try:
+                        import json
+                        parsed = json.loads(service_account_json)
+                        required_fields = ['type', 'project_id', 'private_key', 'client_email']
+                        missing = [f for f in required_fields if f not in parsed]
+                        
+                        if missing:
+                            st.error(f"❌ Thiếu các field: {', '.join(missing)}")
+                        else:
+                            st.success("✅ JSON format hợp lệ!")
+                            st.info(f"Project: {parsed.get('project_id')}")
+                            st.info(f"Email: {parsed.get('client_email')}")
+                    except json.JSONDecodeError as e:
+                        st.error(f"❌ JSON không hợp lệ: {str(e)}")
+                        st.error("Vui lòng kiểm tra và sửa format JSON")
+                else:
+                    st.error("❌ Không tìm thấy GOOGLE_SERVICE_ACCOUNT_JSON")
+            
         elif auth_status.get('method') == 'oauth':
             st.warning("🔧 Cần xác thực Google Drive")
             st.info("""
@@ -752,6 +794,7 @@ def database_management_section():
                 4. Chia sẻ Google Drive folder với email service account
                 
                 📋 **Xem hướng dẫn chi tiết:** SERVICE_ACCOUNT_SETUP.md
+                📋 **Khắc phục JSON Invalid:** STREAMLIT_SECRETS_GUIDE.md
                 """)
             else:
                 st.info("""

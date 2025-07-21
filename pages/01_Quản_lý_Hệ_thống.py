@@ -720,12 +720,14 @@ def database_management_section():
             1. Tạo Google Cloud Project tại console.cloud.google.com
             2. Enable Google Drive API
             3. Tạo OAuth 2.0 credentials (Web application)
-            4. Thêm authorized redirect URI: https://your-app.streamlit.app
-            5. Thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET vào Streamlit Secrets
-            6. Thêm email của bạn vào Test users trong OAuth consent screen
-            7. Restart app và hoàn thành OAuth authentication
+            4. **QUAN TRỌNG**: Authorized redirect URI phải là: https://your-actual-app.streamlit.app
+            5. **KHÔNG dùng**: http://localhost:8080 trong production
+            6. Thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET vào Streamlit Secrets
+            7. Thêm email của bạn vào Test users trong OAuth consent screen
+            8. Restart app và hoàn thành OAuth authentication
             
-            📋 Xem file GOOGLE_OAUTH_TROUBLESHOOTING.md để khắc phục sự cố
+            🚨 **Lỗi redirect_uri=localhost:8080?** Xem GOOGLE_OAUTH_REDIRECT_FIX.md
+            📋 Xem GOOGLE_OAUTH_TROUBLESHOOTING.md để khắc phục sự cố khác
             💡 Tính năng sao lưu là tùy chọn nhưng rất hữu ích cho backup bổ sung
             """)
         return

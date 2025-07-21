@@ -640,7 +640,18 @@ def import_data_section():
 def check_google_auth_status():
     """Check if Google Drive authentication is properly configured - safe for cloud deployment"""
     try:
-        # Check for environment-based auth first (cloud deployment)
+        # Check for Service Account first (recommended approach)
+        service_account_json = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
+        
+        if service_account_json:
+            try:
+                import json
+                json.loads(service_account_json)
+                return {'authenticated': True, 'status': 'Service Account Ready', 'method': 'service_account'}
+            except:
+                return {'authenticated': False, 'status': 'Service Account JSON Invalid', 'method': 'service_account'}
+        
+        # Check for OAuth credentials (legacy method)
         google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
         google_client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
         
@@ -651,11 +662,11 @@ def check_google_auth_status():
                 cloud_auth = CloudGoogleAuth()
                 
                 if cloud_auth.has_credentials() and cloud_auth.is_authenticated():
-                    return {'authenticated': True, 'status': 'Cloud Environment - Authenticated', 'method': 'environment'}
+                    return {'authenticated': True, 'status': 'OAuth Authenticated', 'method': 'oauth'}
                 else:
-                    return {'authenticated': False, 'status': 'Cloud Environment - OAuth Required', 'method': 'environment'}
+                    return {'authenticated': False, 'status': 'OAuth Required', 'method': 'oauth'}
             except:
-                return {'authenticated': False, 'status': 'Cloud Environment - OAuth Required', 'method': 'environment'}
+                return {'authenticated': False, 'status': 'OAuth Required', 'method': 'oauth'}
         
         # Check for local file-based auth (development)
         if not os.path.exists('credentials.json'):
@@ -696,18 +707,19 @@ def database_management_section():
     auth_status = check_google_auth_status()
     
     if not auth_status['authenticated']:
-        if auth_status.get('method') == 'environment':
+        if auth_status.get('method') == 'service_account':
+            st.warning("🔧 Service Account JSON không hợp lệ")
+            st.error("GOOGLE_SERVICE_ACCOUNT_JSON trong Streamlit Secrets có vấn đề")
+            
+        elif auth_status.get('method') == 'oauth':
             st.warning("🔧 Cần xác thực Google Drive")
             st.info("""
-            **Google Drive Credentials đã được cấu hình, cần xác thực:**
+            **Google Drive OAuth Credentials đã có, cần xác thực:**
             1. ✅ Client ID và Secret đã có trong environment variables
             2. ⏳ Cần thực hiện xác thực OAuth một lần
             3. ✅ Sau đó sao lưu sẽ hoạt động tự động
             
-            📝 **Các bước tiếp theo:**
-            - Nhấn "Lấy URL xác thực" bên dưới
-            - Hoàn thành OAuth flow với Google
-            - Hệ thống sao lưu sẽ hoạt động ngay lập tức
+            ⚠️ **Lưu ý:** OAuth có thể gặp lỗi redirect URI. Khuyến nghị dùng Service Account.
             """)
             
             # Show authentication interface for cloud deployment
@@ -715,21 +727,109 @@ def database_management_section():
             
         else:
             st.info("ℹ️ Sao lưu Google Drive chưa được cấu hình")
-            st.info("""
-            **Để kích hoạt sao lưu Google Drive trên Streamlit Cloud:**
-            1. Tạo Google Cloud Project tại console.cloud.google.com
-            2. Enable Google Drive API
-            3. Tạo OAuth 2.0 credentials (Web application)
-            4. **QUAN TRỌNG**: Authorized redirect URI phải là: https://your-actual-app.streamlit.app
-            5. **KHÔNG dùng**: http://localhost:8080 trong production
-            6. Thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET vào Streamlit Secrets
-            7. Thêm email của bạn vào Test users trong OAuth consent screen
-            8. Restart app và hoàn thành OAuth authentication
             
-            🚨 **Lỗi redirect_uri=localhost:8080?** Xem GOOGLE_OAUTH_REDIRECT_FIX.md
-            📋 Xem GOOGLE_OAUTH_TROUBLESHOOTING.md để khắc phục sự cố khác
-            💡 Tính năng sao lưu là tùy chọn nhưng rất hữu ích cho backup bổ sung
-            """)
+            # Show both options
+            method = st.radio(
+                "Chọn phương thức xác thực:",
+                ["Service Account (Khuyến nghị)", "OAuth 2.0 (Phức tạp)"],
+                help="Service Account đơn giản hơn và ổn định hơn cho production"
+            )
+            
+            if "Service Account" in method:
+                st.info("""
+                **🎯 KHUYẾN NGHỊ: Sử dụng Service Account**
+                
+                **Ưu điểm:**
+                ✅ Không cần OAuth flow phức tạp
+                ✅ Không có vấn đề redirect URI  
+                ✅ Hoạt động ngay lập tức
+                ✅ Phù hợp với Streamlit Cloud
+                
+                **Các bước setup:**
+                1. Tạo Service Account trong Google Cloud Console
+                2. Download JSON key file
+                3. Thêm toàn bộ nội dung JSON vào GOOGLE_SERVICE_ACCOUNT_JSON trong Streamlit Secrets
+                4. Chia sẻ Google Drive folder với email service account
+                
+                📋 **Xem hướng dẫn chi tiết:** SERVICE_ACCOUNT_SETUP.md
+                """)
+            else:
+                st.info("""
+                **⚠️ OAuth 2.0 (Có thể gặp vấn đề)**
+                
+                **Vấn đề thường gặp:**
+                ❌ Redirect URI mismatch
+                ❌ App verification required
+                ❌ Test users required
+                ❌ Token expiration
+                
+                **Nếu vẫn muốn dùng OAuth:**
+                1. Tạo OAuth 2.0 credentials trong Google Cloud Console
+                2. Set redirect URI chính xác: https://your-app.streamlit.app
+                3. Thêm GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET vào Streamlit Secrets
+                4. Thêm email vào Test users
+                5. Hoàn thành OAuth flow
+                
+                📋 **Khắc phục sự cố:** GOOGLE_OAUTH_REDIRECT_FIX.md
+                """)
+                
+    else:
+        st.success(f"✅ Google Drive đã kết nối: {auth_status['status']}")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("🔄 Sao lưu ngay", help="Tạo bản sao lưu database ngay lập tức"):
+                with st.spinner("Đang tạo bản sao lưu..."):
+                    try:
+                        # Use appropriate backup method based on authentication
+                        if auth_status.get('method') == 'service_account':
+                            from gdrive_service_account import GoogleDriveServiceAccount
+                            backup_system = GoogleDriveServiceAccount()
+                        else:
+                            backup_system = GoogleDriveBackup()
+                        
+                        if backup_system.create_backup():
+                            st.success("✅ Sao lưu thành công lên Google Drive!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Sao lưu thất bại")
+                    except Exception as e:
+                        st.error(f"❌ Lỗi sao lưu: {str(e)}")
+                        import traceback
+                        st.error(traceback.format_exc())
+        
+        with col2:
+            if st.button("📋 Xem lịch sử sao lưu"):
+                with st.spinner("Đang tải danh sách sao lưu..."):
+                    try:
+                        # Use appropriate backup method based on authentication
+                        if auth_status.get('method') == 'service_account':
+                            from gdrive_service_account import GoogleDriveServiceAccount
+                            backup_system = GoogleDriveServiceAccount()
+                        else:
+                            backup_system = GoogleDriveBackup()
+                            
+                        backups = backup_system.list_backups()
+                        
+                        if backups:
+                            st.write("**📁 Danh sách backup trên Google Drive:**")
+                            for backup in backups:
+                                created_time = backup.get('createdTime', 'Unknown')
+                                if 'T' in created_time:
+                                    # Parse ISO format
+                                    from datetime import datetime
+                                    dt = datetime.fromisoformat(created_time.replace('Z', '+00:00'))
+                                    created_time = dt.strftime("%d/%m/%Y %H:%M:%S")
+                                
+                                size_mb = int(backup.get('size', 0)) / (1024 * 1024)
+                                st.write(f"• **{backup['name']}** - {created_time} ({size_mb:.1f} MB)")
+                        else:
+                            st.info("Chưa có backup nào trên Google Drive")
+                    except Exception as e:
+                        st.error(f"❌ Lỗi tải danh sách: {str(e)}")
+                        import traceback
+                        st.error(traceback.format_exc())
         return
     
     # Show backup system status 

@@ -58,10 +58,18 @@ class GoogleDriveServiceAccount:
             self.service = build('drive', 'v3', credentials=credentials)
             
             # Test the connection
-            about = self.service.about().get(fields="user").execute()
-            logger.info(f"Successfully authenticated as: {about.get('user', {}).get('emailAddress')}")
-            
-            return True
+            try:
+                about = self.service.about().get(fields="user").execute()
+                user_email = about.get('user', {}).get('emailAddress', 'Service Account')
+                logger.info(f"Successfully authenticated as: {user_email}")
+                return True
+            except HttpError as e:
+                if e.resp.status == 403:
+                    logger.error("Google Drive API not enabled or insufficient permissions")
+                    logger.error("Solution: Enable Google Drive API in Google Cloud Console")
+                else:
+                    logger.error(f"API test failed: {e}")
+                return False
             
         except Exception as e:
             logger.error(f"Service Account authentication failed: {e}")

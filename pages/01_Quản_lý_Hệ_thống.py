@@ -747,6 +747,27 @@ def database_management_section():
                             st.success("✅ JSON format hợp lệ!")
                             st.info(f"Project: {parsed.get('project_id')}")
                             st.info(f"Email: {parsed.get('client_email')}")
+                            
+                            # Check if API is likely enabled by testing authentication
+                            st.info("🔬 Testing Google Drive API access...")
+                            try:
+                                from gdrive_service_account import GoogleDriveServiceAccount
+                                test_backup = GoogleDriveServiceAccount()
+                                if test_backup.authenticate():
+                                    st.success("🎉 Google Drive API working perfectly!")
+                                    st.success("Service Account authentication successful!")
+                                else:
+                                    st.warning("⚠️ Authentication failed - likely API not enabled")
+                                    st.info("""
+                                    **Next steps:**
+                                    1. Go to: https://console.cloud.google.com/
+                                    2. Select project: lang-huu-nghi-backup
+                                    3. APIs & Services → Library → Google Drive API → ENABLE
+                                    4. Create Google Drive folder and share with service account
+                                    """)
+                            except Exception as e:
+                                st.warning(f"⚠️ API test failed: {str(e)}")
+                                st.info("Enable Google Drive API in Google Cloud Console")
                     except json.JSONDecodeError as e:
                         st.error(f"❌ JSON không hợp lệ: {str(e)}")
                         st.error("Vui lòng kiểm tra và sửa format JSON")

@@ -358,13 +358,86 @@ def database_management_section():
     """)
 
 def user_management_section():
-    """User management interface for admin users"""
+    """User management interface for admin users with password protection"""
     st.subheader("👥 Quản lý người dùng")
     
     # Only main admin can access user management
     if st.session_state.user.username != 'admin':
         st.warning("🚫 Chỉ tài khoản admin chính mới có thể quản lý người dùng.")
         return
+    
+    # Password protection for user management
+    if not st.session_state.get('user_management_unlocked', False):
+        st.warning("⚠️ Đây là khu vực nhạy cảm yêu cầu xác thực bổ sung")
+        st.info("🔐 Quản lý người dùng có thể thay đổi quyền truy cập và xóa tài khoản. Vui lòng nhập mật khẩu để tiếp tục.")
+        
+        with st.form("user_management_auth"):
+            admin_password = st.text_input(
+                "Nhập mật khẩu admin để truy cập quản lý người dùng:",
+                type="password",
+                help="Nhập mật khẩu hiện tại của tài khoản admin"
+            )
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                verify_submitted = st.form_submit_button("🔓 Xác thực", type="primary")
+            with col2:
+                cancel_submitted = st.form_submit_button("❌ Hủy")
+            
+            if verify_submitted:
+                if admin_password:
+                    # Verify admin password
+                    import hashlib
+                    password_hash = hashlib.sha256(admin_password.encode()).hexdigest()
+                    
+                    db = Database()
+                    admin_user = db.get_user_by_username('admin')
+                    
+                    if admin_user and admin_user.password_hash == password_hash:
+                        st.session_state.user_management_unlocked = True
+                        st.session_state.user_management_unlock_time = time.time()
+                        st.success("✅ Xác thực thành công! Đang mở khóa quản lý người dùng...")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("❌ Mật khẩu không đúng! Vui lòng thử lại.")
+                        time.sleep(2)
+                else:
+                    st.error("❌ Vui lòng nhập mật khẩu!")
+            
+            if cancel_submitted:
+                st.info("🔒 Đã hủy truy cập quản lý người dùng")
+                return
+        
+        return
+    
+    # Check if unlock has expired (15 minutes timeout)
+    unlock_time = st.session_state.get('user_management_unlock_time', 0)
+    if time.time() - unlock_time > 900:  # 15 minutes = 900 seconds
+        st.session_state.user_management_unlocked = False
+        st.warning("⏰ Phiên xác thực đã hết hạn. Vui lòng xác thực lại.")
+        st.rerun()
+    
+    # Show unlock status and remaining time
+    remaining_time = 900 - (time.time() - unlock_time)
+    minutes_left = int(remaining_time // 60)
+    st.success(f"🔓 Quản lý người dùng đã được mở khóa. Còn lại: {minutes_left} phút")
+    
+    # Add manual lock button
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        if st.button("🔒 Khóa lại", help="Khóa lại quản lý người dùng"):
+            st.session_state.user_management_unlocked = False
+            if 'user_management_unlock_time' in st.session_state:
+                del st.session_state.user_management_unlock_time
+            st.info("🔒 Đã khóa quản lý người dùng")
+            st.rerun()
+    
+    with col2:
+        if st.button("⏰ Gia hạn", help="Gia hạn thời gian truy cập"):
+            st.session_state.user_management_unlock_time = time.time()
+            st.success("✅ Đã gia hạn thêm 15 phút")
+            st.rerun()
     
     db = Database()
     
@@ -829,7 +902,7 @@ def render():
     ])
 
     with tabs[0]:
-        # User management section (merged from admin page)
+        # User management section with enhanced security
         user_management_section()
 
     with tabs[1]:

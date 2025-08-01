@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Local Automatic Backup System
-Backs up the database locally on a weekly schedule
+Backs up the database locally on a daily schedule with maximum 10 backups
 """
 
 import os
@@ -62,6 +62,9 @@ class LocalBackup:
             
             # Remove uncompressed copy
             os.remove(backup_db_path)
+            
+            # Automatically cleanup old backups to maintain limit
+            self.cleanup_old_backups()
             
             logger.info(f"Created backup: {backup_zip_path}")
             return backup_zip_path
@@ -201,20 +204,19 @@ class LocalBackup:
             json.dump(metadata, f, indent=2)
     
     def start_scheduler(self):
-        """Start the weekly backup scheduler"""
+        """Start the daily backup scheduler"""
         try:
-            # Schedule backup every Sunday at 2 AM
+            # Schedule backup every day at 2 AM
             self.scheduler.add_job(
                 func=self.perform_backup,
                 trigger="cron",
-                day_of_week=6,  # Sunday
                 hour=2,
                 minute=0,
-                id='weekly_backup'
+                id='daily_backup'
             )
             
             self.scheduler.start()
-            logger.info("Backup scheduler started - backups will run every Sunday at 2:00 AM")
+            logger.info("Backup scheduler started - backups will run daily at 2:00 AM")
             
         except Exception as e:
             logger.error(f"Failed to start scheduler: {e}")
@@ -236,7 +238,7 @@ class LocalBackup:
 backup_service = LocalBackup()
 
 def start_automatic_backups():
-    """Start automatic weekly backups"""
+    """Start automatic daily backups"""
     backup_service.start_scheduler()
     return True
 

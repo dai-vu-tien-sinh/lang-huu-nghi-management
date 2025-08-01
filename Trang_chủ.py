@@ -66,6 +66,15 @@ def main():
     init_auth()
     db = Database()
 
+    # Initialize backup scheduler once
+    if 'backup_scheduler_started' not in st.session_state:
+        try:
+            from local_backup import start_automatic_backups
+            start_automatic_backups()
+            st.session_state.backup_scheduler_started = True
+        except Exception as e:
+            print(f"Failed to start backup scheduler: {e}")
+
     # Handle keep-alive API requests (hidden from regular navigation)
     if st.query_params.get("keep_alive"):
         handle_keep_alive_request()

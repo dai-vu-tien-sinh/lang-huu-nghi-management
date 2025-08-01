@@ -216,6 +216,7 @@ def database_management_section():
     st.subheader("ℹ️ Thông tin hệ thống sao lưu")
     st.info("""
     **Hệ thống sao lưu cục bộ:**
+    • Tự động sao lưu hàng ngày lúc 2:00 AM
     • Tạo file backup nén (.zip) với metadata
     • Tự động dọn dẹp các backup cũ (giữ tối đa 10 bản)
     • Hỗ trợ khôi phục từ file backup

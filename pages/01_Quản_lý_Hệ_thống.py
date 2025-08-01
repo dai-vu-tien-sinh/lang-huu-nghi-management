@@ -155,8 +155,8 @@ def database_management_section():
             
             if backups:
                 st.write(f"🗂️ Có {len(backups)} bản sao lưu")
-                for backup in backups[-3:]:  # Show last 3 backups
-                    st.write(f"• {backup['filename']} ({backup['size']})")
+                for backup in backups[:3]:  # Show first 3 backups (most recent)
+                    st.write(f"• {backup['created']} ({backup['size']})")
             else:
                 st.write("📭 Chưa có bản sao lưu nào")
                 

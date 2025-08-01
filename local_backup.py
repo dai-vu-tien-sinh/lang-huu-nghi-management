@@ -106,6 +106,21 @@ class LocalBackup:
                     file_stat = os.stat(file_path)
                     size_mb = file_stat.st_size / (1024 * 1024)
                     
+                    # Extract timestamp from filename
+                    filename = os.path.basename(file_path)
+                    # Extract timestamp: lang_huu_nghi_backup_YYYYMMDD_HHMMSS.zip
+                    timestamp_str = filename.replace('lang_huu_nghi_backup_', '').replace('.zip', '')
+                    
+                    try:
+                        # Parse timestamp from filename
+                        backup_datetime = datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
+                        display_date = backup_datetime.strftime('%d/%m/%Y lúc %H:%M')
+                        sort_date = backup_datetime
+                    except ValueError:
+                        # Fallback to file modification time if filename parsing fails
+                        sort_date = datetime.fromtimestamp(file_stat.st_mtime)
+                        display_date = sort_date.strftime('%d/%m/%Y lúc %H:%M')
+                    
                     # Try to read metadata from zip
                     metadata = {}
                     try:
@@ -116,10 +131,11 @@ class LocalBackup:
                         pass
                     
                     backup_info = {
-                        'filename': os.path.basename(file_path),
+                        'filename': filename,
                         'path': file_path,
                         'size': f"{size_mb:.2f} MB",
-                        'created': datetime.fromtimestamp(file_stat.st_mtime).strftime('%d/%m/%Y %H:%M'),
+                        'created': display_date,
+                        'created_datetime': sort_date,
                         'metadata': metadata
                     }
                     backups.append(backup_info)
@@ -127,6 +143,8 @@ class LocalBackup:
                     logger.warning(f"Failed to read backup info for {file_path}: {e}")
                     continue
             
+            # Sort by actual creation time
+            backups.sort(key=lambda x: x['created_datetime'], reverse=True)
             return backups
             
         except Exception as e:

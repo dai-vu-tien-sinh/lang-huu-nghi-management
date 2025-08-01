@@ -151,6 +151,45 @@ class LocalBackup:
             logger.error(f"Failed to get backup info: {e}")
             return []
     
+    def create_pre_restore_backup(self):
+        """Create a special backup before restore for revert purposes"""
+        try:
+            if not os.path.exists(self.db_path):
+                logger.error(f"Database file not found: {self.db_path}")
+                return None
+            
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            pre_restore_name = f"pre_restore_backup_{timestamp}"
+            backup_db_path = os.path.join(self.backup_dir, f"{pre_restore_name}.db")
+            backup_zip_path = os.path.join(self.backup_dir, f"{pre_restore_name}.zip")
+            
+            # Create database copy
+            shutil.copy2(self.db_path, backup_db_path)
+            
+            # Create compressed backup
+            with zipfile.ZipFile(backup_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.write(backup_db_path, f"{pre_restore_name}.db")
+                
+                # Add metadata
+                metadata = {
+                    'created': datetime.now().isoformat(),
+                    'original_size': os.path.getsize(self.db_path),
+                    'compressed_size': os.path.getsize(backup_zip_path),
+                    'version': '1.0',
+                    'type': 'pre_restore'
+                }
+                zipf.writestr('backup_info.json', json.dumps(metadata, indent=2))
+            
+            # Remove uncompressed copy
+            os.remove(backup_db_path)
+            
+            logger.info(f"Created pre-restore backup: {backup_zip_path}")
+            return backup_zip_path
+            
+        except Exception as e:
+            logger.error(f"Failed to create pre-restore backup: {e}")
+            return None
+
     def restore_backup(self, backup_path):
         """Restore database from backup"""
         try:
@@ -158,26 +197,30 @@ class LocalBackup:
                 logger.error(f"Backup file not found: {backup_path}")
                 return False
             
-            # Create backup of current database before restore
-            current_backup = f"{self.db_path}.restore_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            if os.path.exists(self.db_path):
-                shutil.copy2(self.db_path, current_backup)
-                logger.info(f"Current database backed up to: {current_backup}")
+            # Handle both .zip and .db files
+            if backup_path.endswith('.zip'):
+                # Extract and restore from zip
+                with zipfile.ZipFile(backup_path, 'r') as zipf:
+                    # Find the database file in the zip
+                    db_files = [name for name in zipf.namelist() if name.endswith('.db')]
+                    if not db_files:
+                        logger.error("No database file found in backup")
+                        return False
+                    
+                    # Extract database file
+                    zipf.extract(db_files[0], self.backup_dir)
+                    extracted_path = os.path.join(self.backup_dir, db_files[0])
+                    
+                    # Replace current database
+                    shutil.move(extracted_path, self.db_path)
             
-            # Extract and restore from zip
-            with zipfile.ZipFile(backup_path, 'r') as zipf:
-                # Find the database file in the zip
-                db_files = [name for name in zipf.namelist() if name.endswith('.db')]
-                if not db_files:
-                    logger.error("No database file found in backup")
-                    return False
-                
-                # Extract database file
-                zipf.extract(db_files[0], self.backup_dir)
-                extracted_path = os.path.join(self.backup_dir, db_files[0])
-                
-                # Replace current database
-                shutil.move(extracted_path, self.db_path)
+            elif backup_path.endswith('.db'):
+                # Direct database file restore
+                shutil.copy2(backup_path, self.db_path)
+            
+            else:
+                logger.error(f"Unsupported backup file format: {backup_path}")
+                return False
                 
             logger.info(f"Database restored from: {backup_path}")
             return True

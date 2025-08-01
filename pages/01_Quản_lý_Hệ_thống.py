@@ -155,51 +155,68 @@ def database_management_section():
             
             if backups:
                 st.write(f"🗂️ Có {len(backups)} bản sao lưu")
-                for backup in backups[:3]:  # Show first 3 backups (most recent)
-                    st.write(f"• {backup['created']} ({backup['size']})")
+                for i, backup in enumerate(backups[:3]):  # Show first 3 backups (most recent)
+                    col_date, col_restore = st.columns([3, 1])
+                    
+                    with col_date:
+                        st.write(f"• {backup['created']} ({backup['size']})")
+                    
+                    with col_restore:
+                        if st.button("🔄", key=f"restore_{i}", help="Khôi phục backup này"):
+                            # Store backup info in session state for confirmation
+                            st.session_state.restore_backup_path = backup['path']
+                            st.session_state.restore_backup_name = backup['created']
+                            st.session_state.show_restore_confirm = True
+                            st.rerun()
             else:
                 st.write("📭 Chưa có bản sao lưu nào")
                 
         except Exception as e:
             st.write("⚠️ Không thể kiểm tra thông tin backup")
     
-    # Restore Section
-    st.subheader("🔄 Khôi phục dữ liệu")
-    
-    # Upload and restore backup
-    uploaded_file = st.file_uploader(
-        "Chọn file backup để khôi phục",
-        type=['zip', 'db'],
-        help="Chọn file backup (.zip hoặc .db) để khôi phục dữ liệu"
-    )
-    
-    if uploaded_file:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.info(f"📁 File đã chọn: {uploaded_file.name}")
-            st.info(f"📊 Kích thước: {uploaded_file.size / 1024 / 1024:.2f} MB")
+    # Handle restore confirmation dialog
+    if st.session_state.get('show_restore_confirm', False):
+        st.subheader("⚠️ Xác nhận khôi phục")
+        st.warning(f"""
+        **Bạn có chắc chắn muốn khôi phục dữ liệu từ backup:**
+        📅 {st.session_state.get('restore_backup_name', 'Không xác định')}
         
-        with col2:
-            if st.button("🔄 Khôi phục", type="primary"):
+        ⚠️ **Lưu ý quan trọng:**
+        - Dữ liệu hiện tại sẽ được sao lưu tự động trước khi khôi phục
+        - Bạn có thể hoàn tác thao tác này sau khi khôi phục
+        - Tất cả thay đổi sau thời điểm backup sẽ bị mất
+        """)
+        
+        col1, col2, col3 = st.columns([1, 1, 1])
+        
+        with col1:
+            if st.button("✅ Xác nhận khôi phục", type="primary", use_container_width=True):
                 with st.spinner("Đang khôi phục dữ liệu..."):
                     try:
-                        # Save uploaded file temporarily
-                        temp_path = f"temp_restore_{uploaded_file.name}"
-                        with open(temp_path, 'wb') as f:
-                            f.write(uploaded_file.getvalue())
-                        
-                        # Restore from backup
                         from local_backup import LocalBackup
                         backup_service = LocalBackup()
                         
-                        success = backup_service.restore_backup(temp_path)
+                        # Create pre-restore backup
+                        pre_restore_backup = backup_service.create_pre_restore_backup()
+                        if pre_restore_backup:
+                            st.session_state.last_pre_restore_backup = pre_restore_backup
                         
-                        # Clean up temp file
-                        os.remove(temp_path)
+                        # Restore from selected backup
+                        success = backup_service.restore_backup(st.session_state.restore_backup_path)
                         
                         if success:
                             st.success("✅ Khôi phục thành công!")
-                            st.success("🔄 Vui lòng tải lại trang để thấy dữ liệu mới")
+                            st.success("🔄 Dữ liệu đã được khôi phục. Trang sẽ tự động tải lại...")
+                            
+                            # Store restore info for revert option
+                            st.session_state.restore_completed = True
+                            st.session_state.restored_from = st.session_state.restore_backup_name
+                            
+                            # Clear confirmation dialog
+                            st.session_state.show_restore_confirm = False
+                            del st.session_state.restore_backup_path
+                            del st.session_state.restore_backup_name
+                            
                             st.balloons()
                             time.sleep(2)
                             st.rerun()
@@ -208,9 +225,126 @@ def database_management_section():
                             
                     except Exception as e:
                         st.error(f"❌ Lỗi khôi phục: {str(e)}")
-                        # Clean up temp file if it exists
-                        if 'temp_path' in locals() and os.path.exists(temp_path):
+        
+        with col2:
+            if st.button("❌ Hủy bỏ", use_container_width=True):
+                st.session_state.show_restore_confirm = False
+                if 'restore_backup_path' in st.session_state:
+                    del st.session_state.restore_backup_path
+                if 'restore_backup_name' in st.session_state:
+                    del st.session_state.restore_backup_name
+                st.rerun()
+    
+    # Show revert option if a restore was just completed
+    if st.session_state.get('restore_completed', False):
+        st.subheader("↩️ Hoàn tác khôi phục")
+        st.info(f"""
+        **Khôi phục gần nhất:** {st.session_state.get('restored_from', 'Không xác định')}
+        
+        Bạn có thể hoàn tác việc khôi phục này và quay lại dữ liệu trước đó.
+        """)
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            if st.button("↩️ Hoàn tác khôi phục", type="secondary", use_container_width=True):
+                if st.session_state.get('last_pre_restore_backup'):
+                    with st.spinner("Đang hoàn tác khôi phục..."):
+                        try:
+                            from local_backup import LocalBackup
+                            backup_service = LocalBackup()
+                            
+                            success = backup_service.restore_backup(st.session_state.last_pre_restore_backup)
+                            
+                            if success:
+                                st.success("✅ Đã hoàn tác khôi phục thành công!")
+                                st.success("🔄 Dữ liệu đã được khôi phục về trạng thái trước đó")
+                                
+                                # Clear restore session state
+                                st.session_state.restore_completed = False
+                                if 'restored_from' in st.session_state:
+                                    del st.session_state.restored_from
+                                if 'last_pre_restore_backup' in st.session_state:
+                                    del st.session_state.last_pre_restore_backup
+                                
+                                st.balloons()
+                                time.sleep(2)
+                                st.rerun()
+                            else:
+                                st.error("❌ Hoàn tác thất bại!")
+                                
+                        except Exception as e:
+                            st.error(f"❌ Lỗi hoàn tác: {str(e)}")
+                else:
+                    st.error("❌ Không tìm thấy backup để hoàn tác")
+        
+        with col2:
+            if st.button("✓ Giữ nguyên", use_container_width=True):
+                st.session_state.restore_completed = False
+                if 'restored_from' in st.session_state:
+                    del st.session_state.restored_from
+                if 'last_pre_restore_backup' in st.session_state:
+                    del st.session_state.last_pre_restore_backup
+                st.rerun()
+    
+    # Restore Section - File Upload
+    if not st.session_state.get('show_restore_confirm', False):
+        st.subheader("📤 Khôi phục từ file")
+        
+        # Upload and restore backup
+        uploaded_file = st.file_uploader(
+            "Chọn file backup để khôi phục",
+            type=['zip', 'db'],
+            help="Chọn file backup (.zip hoặc .db) để khôi phục dữ liệu"
+        )
+        
+        if uploaded_file:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.info(f"📁 File đã chọn: {uploaded_file.name}")
+                st.info(f"📊 Kích thước: {uploaded_file.size / 1024 / 1024:.2f} MB")
+            
+            with col2:
+                if st.button("🔄 Khôi phục từ file", type="primary"):
+                    with st.spinner("Đang khôi phục dữ liệu..."):
+                        try:
+                            # Save uploaded file temporarily
+                            temp_path = f"temp_restore_{uploaded_file.name}"
+                            with open(temp_path, 'wb') as f:
+                                f.write(uploaded_file.getvalue())
+                            
+                            # Create pre-restore backup
+                            from local_backup import LocalBackup
+                            backup_service = LocalBackup()
+                            pre_restore_backup = backup_service.create_pre_restore_backup()
+                            if pre_restore_backup:
+                                st.session_state.last_pre_restore_backup = pre_restore_backup
+                            
+                            # Restore from backup
+                            success = backup_service.restore_backup(temp_path)
+                            
+                            # Clean up temp file
                             os.remove(temp_path)
+                            
+                            if success:
+                                st.success("✅ Khôi phục thành công!")
+                                st.success("🔄 Vui lòng tải lại trang để thấy dữ liệu mới")
+                                
+                                # Store restore info for revert option
+                                st.session_state.restore_completed = True
+                                st.session_state.restored_from = uploaded_file.name
+                                
+                                st.balloons()
+                                time.sleep(2)
+                                st.rerun()
+                            else:
+                                st.error("❌ Khôi phục thất bại!")
+                                
+                        except Exception as e:
+                            st.error(f"❌ Lỗi khôi phục: {str(e)}")
+                            # Clean up temp file if it exists
+                            if 'temp_path' in locals() and os.path.exists(temp_path):
+                                os.remove(temp_path)
     
     # Information section
     st.subheader("ℹ️ Thông tin hệ thống sao lưu")

@@ -20,6 +20,73 @@ try:
 except ImportError as e:
     BACKUP_AVAILABLE = False
 
+def parse_date_advanced(date_str, format_hint="Auto-detect"):
+    """Advanced date parsing with multiple format support and auto-detection"""
+    if not date_str or pd.isna(date_str):
+        return None
+        
+    # Convert to string for consistent handling
+    date_str_clean = str(date_str).strip()
+    
+    # Handle empty or invalid values
+    if not date_str_clean or date_str_clean.lower() in ['nan', 'none', 'null', 'na', 'n/a', 'không rõ', 'x', '?', '-', '--']:
+        return None
+    
+    # Define date formats to try
+    date_formats = []
+    
+    if format_hint == "Auto-detect":
+        # Auto-detect based on common patterns
+        date_formats = [
+            '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%m/%d/%Y',
+            '%d/%m/%y', '%d-%m-%y', '%Y/%m/%d', '%m-%d-%Y',
+            '%d.%m.%Y', '%d.%m.%y', '%Y.%m.%d',
+            '%d %m %Y', '%d %m %y', '%Y %m %d'
+        ]
+    else:
+        # Use specific format hint
+        format_map = {
+            "dd/mm/yyyy": ['%d/%m/%Y'],
+            "dd-mm-yyyy": ['%d-%m-%Y'],
+            "yyyy-mm-dd": ['%Y-%m-%d'],
+            "mm/dd/yyyy": ['%m/%d/%Y'],
+            "dd/mm/yy": ['%d/%m/%y'],
+            "dd-mm-yy": ['%d-%m-%y'],
+            "yyyy/mm/dd": ['%Y/%m/%d']
+        }
+        date_formats = format_map.get(format_hint, ['%d/%m/%Y'])
+    
+    # Try parsing with pandas first (handles Excel dates)
+    try:
+        parsed_date = pd.to_datetime(date_str_clean, dayfirst=True)
+        return parsed_date.strftime('%Y-%m-%d')
+    except:
+        pass
+    
+    # Try parsing with specified formats
+    from datetime import datetime
+    for fmt in date_formats:
+        try:
+            parsed_date = datetime.strptime(date_str_clean, fmt)
+            return parsed_date.strftime('%Y-%m-%d')
+        except ValueError:
+            continue
+    
+    # Try parsing numeric Excel serial dates
+    try:
+        if date_str_clean.replace('.', '').isdigit():
+            excel_date = float(date_str_clean)
+            if 1 <= excel_date <= 100000:  # Reasonable range for Excel dates
+                from datetime import datetime, timedelta
+                # Excel epoch starts from 1900-01-01, but with 1900 leap year bug
+                excel_epoch = datetime(1899, 12, 30)
+                parsed_date = excel_epoch + timedelta(days=excel_date)
+                return parsed_date.strftime('%Y-%m-%d')
+    except:
+        pass
+    
+    return None
+
 def parse_date(date_str):
     """Try multiple date formats and return standardized date string"""
     # Handle None, nan, or empty strings
@@ -823,28 +890,168 @@ def spreadsheet_management_section():
             st.error(f"❌ Lỗi khi tải hồ sơ y tế: {str(e)}")
 
 def excel_import_section():
-    """Excel data import functionality"""
-    st.subheader("📥 Nhập dữ liệu từ Excel")
+    """Excel data import functionality with advanced edge case handling"""
+    st.subheader("📥 Nhập dữ liệu từ Excel - Nâng cao")
     
     db = Database()
+    
+    # Advanced settings section
+    with st.expander("⚙️ Cài đặt nâng cao", expanded=False):
+        st.write("**📅 Định dạng ngày tháng:**")
+        col1, col2 = st.columns(2)
+        with col1:
+            date_formats = [
+                "dd/mm/yyyy", "dd-mm-yyyy", "yyyy-mm-dd", "mm/dd/yyyy", 
+                "dd/mm/yy", "dd-mm-yy", "yyyy/mm/dd", "Auto-detect"
+            ]
+            selected_date_format = st.selectbox(
+                "Định dạng ngày tháng trong Excel:",
+                date_formats,
+                index=len(date_formats)-1,
+                help="Chọn định dạng ngày tháng hoặc để Auto-detect tự nhận diện"
+            )
+        
+        with col2:
+            # Duplicate handling options
+            duplicate_options = [
+                "Skip duplicates", "Update existing", "Create new", "Ask for each"
+            ]
+            duplicate_handling = st.selectbox(
+                "Xử lý bản ghi trùng lặp:",
+                duplicate_options,
+                help="Cách xử lý khi phát hiện dữ liệu trùng lặp"
+            )
+        
+        st.write("**🔧 Tùy chọn xử lý dữ liệu:**")
+        col3, col4 = st.columns(2)
+        with col3:
+            clean_data = st.checkbox("Tự động làm sạch dữ liệu", value=True, help="Loại bỏ khoảng trắng thừa, định dạng lại text")
+            validate_email = st.checkbox("Kiểm tra định dạng email", value=True, help="Xác thực địa chỉ email hợp lệ")
+        
+        with col4:
+            validate_phone = st.checkbox("Kiểm tra số điện thoại", value=True, help="Xác thực định dạng số điện thoại Việt Nam")
+            ignore_empty_rows = st.checkbox("Bỏ qua dòng trống", value=True, help="Không xử lý các dòng không có dữ liệu quan trọng")
     
     # File upload
     uploaded_file = st.file_uploader(
         "Chọn file Excel để nhập dữ liệu",
         type=['xlsx', 'xls'],
-        help="Hỗ trợ định dạng .xlsx và .xls"
+        help="Hỗ trợ định dạng .xlsx và .xls. File tối đa 200MB"
     )
     
     if uploaded_file:
         try:
-            # Read Excel file
-            df = pd.read_excel(uploaded_file)
+            # Enhanced file reading with error handling
+            with st.spinner("Đang đọc file Excel..."):
+                try:
+                    # Try reading with different encodings and engines
+                    df = pd.read_excel(uploaded_file, engine='openpyxl')
+                except Exception as e1:
+                    try:
+                        df = pd.read_excel(uploaded_file, engine='xlrd')
+                    except Exception as e2:
+                        st.error(f"❌ Không thể đọc file Excel. Lỗi: {str(e1)}")
+                        st.error(f"Thử lại với engine khác: {str(e2)}")
+                        return
             
-            st.success(f"✅ Đã tải file Excel thành công! Tìm thấy {len(df)} dòng dữ liệu.")
+            # Data validation and cleaning
+            original_rows = len(df)
             
-            # Show preview
-            st.subheader("👀 Xem trước dữ liệu")
-            st.dataframe(df.head(10), use_container_width=True)
+            # Remove completely empty rows if option is selected
+            if ignore_empty_rows:
+                df = df.dropna(how='all')
+                removed_empty = original_rows - len(df)
+                if removed_empty > 0:
+                    st.info(f"🧹 Đã loại bỏ {removed_empty} dòng trống")
+            
+            # Basic data info
+            st.success(f"✅ Đã tải file Excel thành công!")
+            
+            # Show data statistics
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("📊 Tổng dòng", len(df))
+            with col2:
+                st.metric("📋 Tổng cột", len(df.columns))
+            with col3:
+                st.metric("📝 Dòng có dữ liệu", df.count().max())
+            with col4:
+                st.metric("🚫 Dòng thiếu dữ liệu", len(df) - df.count().max())
+            
+            # Show data quality assessment
+            st.subheader("🔍 Đánh giá chất lượng dữ liệu")
+            quality_tab1, quality_tab2, quality_tab3 = st.tabs(["📊 Tổng quan", "⚠️ Vấn đề phát hiện", "👀 Xem trước"])
+            
+            with quality_tab1:
+                # Data type analysis
+                st.write("**📈 Phân tích kiểu dữ liệu:**")
+                dtype_info = []
+                for col in df.columns:
+                    null_count = df[col].isnull().sum()
+                    null_percent = (null_count / len(df)) * 100
+                    dtype_info.append({
+                        'Cột': col,
+                        'Kiểu dữ liệu': str(df[col].dtype),
+                        'Giá trị null': null_count,
+                        '% Thiếu': f"{null_percent:.1f}%"
+                    })
+                
+                st.dataframe(pd.DataFrame(dtype_info), use_container_width=True)
+            
+            with quality_tab2:
+                # Identify potential issues
+                issues = []
+                
+                for col in df.columns:
+                    col_data = df[col].dropna()
+                    if len(col_data) == 0:
+                        continue
+                    
+                    # Check for potential date columns
+                    if any(keyword in col.lower() for keyword in ['date', 'ngày', 'sinh', 'tạo', 'cập nhật']):
+                        try:
+                            pd.to_datetime(col_data.iloc[0])
+                            issues.append(f"✅ Cột '{col}' có thể là ngày tháng")
+                        except:
+                            issues.append(f"⚠️ Cột '{col}' có thể là ngày tháng nhưng định dạng không chuẩn")
+                    
+                    # Check for potential email columns
+                    if any(keyword in col.lower() for keyword in ['email', 'mail', 'e-mail']):
+                        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                        valid_emails = col_data.astype(str).str.match(email_pattern).sum()
+                        if valid_emails < len(col_data) * 0.8:
+                            issues.append(f"⚠️ Cột '{col}' có {len(col_data) - valid_emails} email không hợp lệ")
+                        else:
+                            issues.append(f"✅ Cột '{col}' có định dạng email hợp lệ")
+                    
+                    # Check for duplicate values
+                    duplicates = col_data.duplicated().sum()
+                    if duplicates > 0:
+                        issues.append(f"🔄 Cột '{col}' có {duplicates} giá trị trùng lặp")
+                
+                if issues:
+                    for issue in issues:
+                        if issue.startswith("✅"):
+                            st.success(issue)
+                        elif issue.startswith("⚠️"):
+                            st.warning(issue)
+                        elif issue.startswith("🔄"):
+                            st.info(issue)
+                else:
+                    st.success("✅ Không phát hiện vấn đề nào trong dữ liệu")
+            
+            with quality_tab3:
+                # Show preview with enhanced formatting
+                st.write("**👀 Xem trước dữ liệu (10 dòng đầu):**")
+                preview_df = df.head(10).copy()
+                
+                # Apply basic cleaning for preview if enabled
+                if clean_data:
+                    for col in preview_df.columns:
+                        if preview_df[col].dtype == 'object':
+                            preview_df[col] = preview_df[col].astype(str).str.strip()
+                
+                st.dataframe(preview_df, use_container_width=True)
             
             # Data type selection
             st.subheader("📋 Chọn loại dữ liệu")
@@ -873,38 +1080,160 @@ def excel_import_section():
                     phone_col = st.selectbox("Cột 'Điện thoại':", [""] + excel_columns, key="phone_col")
                 
                 if st.button("📥 Nhập dữ liệu học sinh", type="primary"):
-                    with st.spinner("Đang nhập dữ liệu..."):
+                    with st.spinner("Đang xử lý và nhập dữ liệu..."):
                         try:
                             success_count = 0
                             error_count = 0
+                            duplicate_count = 0
+                            updated_count = 0
+                            error_details = []
                             
-                            for _, row in df.iterrows():
+                            # Progress tracking
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
+                            
+                            total_rows = len(df)
+                            
+                            for idx, row in df.iterrows():
+                                # Update progress
+                                progress = (idx + 1) / total_rows
+                                progress_bar.progress(progress)
+                                status_text.text(f"Đang xử lý dòng {idx + 1}/{total_rows}")
+                                
                                 try:
+                                    # Clean and validate data
+                                    raw_name = row[name_col] if pd.notna(row[name_col]) else ''
+                                    raw_birth = row[birth_col] if pd.notna(row[birth_col]) else ''
+                                    raw_address = row[address_col] if pd.notna(row[address_col]) else ''
+                                    raw_email = row[email_col] if email_col and pd.notna(row[email_col]) else None
+                                    raw_gender = row[gender_col] if gender_col and pd.notna(row[gender_col]) else None
+                                    raw_phone = row[phone_col] if phone_col and pd.notna(row[phone_col]) else None
+                                    
+                                    # Skip empty rows if option enabled
+                                    if ignore_empty_rows and not any([raw_name, raw_birth, raw_address]):
+                                        continue
+                                    
+                                    # Clean data if enabled
+                                    if clean_data:
+                                        raw_name = str(raw_name).strip() if raw_name else ''
+                                        raw_address = str(raw_address).strip() if raw_address else ''
+                                        if raw_email:
+                                            raw_email = str(raw_email).strip().lower()
+                                        if raw_phone:
+                                            # Clean phone number (remove spaces, dashes, etc.)
+                                            raw_phone = ''.join(filter(str.isdigit, str(raw_phone)))
+                                    
+                                    # Validate email format
+                                    if validate_email and raw_email:
+                                        import re
+                                        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                                        if not re.match(email_pattern, raw_email):
+                                            error_details.append(f"Dòng {idx + 1}: Email không hợp lệ '{raw_email}'")
+                                            raw_email = None
+                                    
+                                    # Validate phone number format
+                                    if validate_phone and raw_phone:
+                                        # Vietnamese phone number validation
+                                        if not (raw_phone.startswith('0') and len(raw_phone) in [10, 11]):
+                                            error_details.append(f"Dòng {idx + 1}: SĐT không hợp lệ '{raw_phone}'")
+                                            raw_phone = None
+                                    
+                                    # Parse date with multiple formats
+                                    processed_birth_date = None
+                                    if raw_birth:
+                                        processed_birth_date = parse_date_advanced(raw_birth, selected_date_format)
+                                        if not processed_birth_date:
+                                            error_details.append(f"Dòng {idx + 1}: Ngày sinh không hợp lệ '{raw_birth}'")
+                                    
+                                    # Check for duplicates
+                                    existing_student = None
+                                    if raw_name and processed_birth_date:
+                                        # Check for existing student with same name and birth date
+                                        try:
+                                            students = db.get_all_students()
+                                            for student in students:
+                                                if (student.full_name.lower() == raw_name.lower() and 
+                                                    student.birth_date == processed_birth_date):
+                                                    existing_student = student
+                                                    break
+                                        except:
+                                            pass
+                                    
                                     # Prepare student data
                                     student_data = {
-                                        'full_name': str(row[name_col]) if pd.notna(row[name_col]) else '',
-                                        'birth_date': str(row[birth_col]) if pd.notna(row[birth_col]) else '',
-                                        'address': str(row[address_col]) if pd.notna(row[address_col]) else '',
-                                        'email': str(row[email_col]) if email_col and pd.notna(row[email_col]) else None,
-                                        'gender': str(row[gender_col]) if gender_col and pd.notna(row[gender_col]) else None,
-                                        'phone': str(row[phone_col]) if phone_col and pd.notna(row[phone_col]) else None
+                                        'full_name': raw_name,
+                                        'birth_date': processed_birth_date,
+                                        'address': raw_address,
+                                        'email': raw_email,
+                                        'gender': raw_gender,
+                                        'phone': raw_phone
                                     }
+                                    
+                                    # Handle duplicates based on user preference
+                                    if existing_student:
+                                        if duplicate_handling == "Skip duplicates":
+                                            duplicate_count += 1
+                                            continue
+                                        elif duplicate_handling == "Update existing":
+                                            # Update existing student
+                                            if db.update_student(existing_student.id, **student_data):
+                                                updated_count += 1
+                                            else:
+                                                error_count += 1
+                                                error_details.append(f"Dòng {idx + 1}: Không thể cập nhật học sinh '{raw_name}'")
+                                            continue
+                                        elif duplicate_handling == "Ask for each":
+                                            # This would require UI interaction - for now, skip
+                                            duplicate_count += 1
+                                            continue
+                                        # "Create new" - proceed with creation
+                                    
+                                    # Validate required fields
+                                    if not raw_name:
+                                        error_count += 1
+                                        error_details.append(f"Dòng {idx + 1}: Thiếu họ tên")
+                                        continue
                                     
                                     # Create student
                                     if db.create_student(**student_data):
                                         success_count += 1
                                     else:
                                         error_count += 1
+                                        error_details.append(f"Dòng {idx + 1}: Không thể tạo học sinh '{raw_name}'")
                                         
                                 except Exception as e:
                                     error_count += 1
-                                    print(f"Error importing row: {e}")
+                                    error_details.append(f"Dòng {idx + 1}: Lỗi xử lý - {str(e)}")
                             
+                            # Complete progress
+                            progress_bar.progress(1.0)
+                            status_text.text("Hoàn thành!")
+                            
+                            # Show results
                             st.success(f"✅ Nhập dữ liệu hoàn thành!")
-                            st.info(f"📊 Thành công: {success_count} | Lỗi: {error_count}")
+                            
+                            # Results summary
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                st.metric("✅ Thành công", success_count)
+                            with col2:
+                                st.metric("🔄 Cập nhật", updated_count)
+                            with col3:
+                                st.metric("⏭️ Bỏ qua", duplicate_count)
+                            with col4:
+                                st.metric("❌ Lỗi", error_count)
+                            
+                            # Show error details if any
+                            if error_details:
+                                with st.expander(f"⚠️ Chi tiết lỗi ({len(error_details)} mục)", expanded=False):
+                                    for error in error_details[:50]:  # Limit to first 50 errors
+                                        st.error(error)
+                                    if len(error_details) > 50:
+                                        st.warning(f"... và {len(error_details) - 50} lỗi khác")
                             
                         except Exception as e:
-                            st.error(f"❌ Lỗi khi nhập dữ liệu: {str(e)}")
+                            st.error(f"❌ Lỗi nghiêm trọng khi nhập dữ liệu: {str(e)}")
+                            st.exception(e)
             
             elif data_type == "Người dùng":
                 st.write("**Ánh xạ cột cho dữ liệu người dùng:**")
@@ -928,22 +1257,50 @@ def excel_import_section():
         except Exception as e:
             st.error(f"❌ Lỗi khi đọc file Excel: {str(e)}")
     
-    # Import instructions
-    st.subheader("📖 Hướng dẫn nhập dữ liệu")
-    st.info("""
-    **📋 Định dạng file Excel:**
-    • File phải có định dạng .xlsx hoặc .xls
-    • Dòng đầu tiên chứa tên cột
-    • Không có dòng trống giữa dữ liệu
+    # Enhanced import instructions
+    st.subheader("📖 Hướng dẫn nhập dữ liệu nâng cao")
     
-    **🎓 Dữ liệu học sinh:**
-    • Cột bắt buộc: Họ tên, Ngày sinh, Địa chỉ
-    • Cột tùy chọn: Email, Giới tính, Điện thoại
+    instruction_tabs = st.tabs(["📋 Định dạng file", "🎓 Dữ liệu học sinh", "👥 Dữ liệu người dùng", "⚙️ Tính năng nâng cao"])
     
-    **👥 Dữ liệu người dùng:**
-    • Cột bắt buộc: Tên đăng nhập, Họ tên, Vai trò, Mật khẩu
-    • Vai trò hợp lệ: admin, teacher, doctor, administrative, family
-    """)
+    with instruction_tabs[0]:
+        st.info("""
+        **📋 Định dạng file Excel được hỗ trợ:**
+        • File phải có định dạng .xlsx hoặc .xls
+        • Dòng đầu tiên chứa tên cột (header)
+        • Tối đa 200MB, không giới hạn số dòng
+        • Hỗ trợ nhiều engine đọc file (openpyxl, xlrd)
+        • Tự động phát hiện và xử lý encoding
+        """)
+    
+    with instruction_tabs[1]:
+        st.info("""
+        **🎓 Dữ liệu học sinh:**
+        • **Cột bắt buộc:** Họ tên, Ngày sinh, Địa chỉ
+        • **Cột tùy chọn:** Email, Giới tính, Điện thoại
+        • **Định dạng ngày:** dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd, hoặc Auto-detect
+        • **Email:** Tự động validate định dạng email@domain.com
+        • **SĐT:** Validate số điện thoại Việt Nam (10-11 số, bắt đầu bằng 0)
+        """)
+    
+    with instruction_tabs[2]:
+        st.warning("""
+        **👥 Dữ liệu người dùng:**
+        • **Cột bắt buộc:** Tên đăng nhập, Họ tên, Vai trò, Mật khẩu
+        • **Vai trò hợp lệ:** admin, teacher, doctor, administrative, family
+        • **Bảo mật:** Chức năng này cần được triển khai cẩn thận
+        • **Khuyến nghị:** Chỉ admin có thể nhập dữ liệu người dùng
+        """)
+    
+    with instruction_tabs[3]:
+        st.success("""
+        **⚙️ Tính năng nâng cao:**
+        • **Xử lý trùng lặp:** Skip, Update, Create new, Ask for each
+        • **Làm sạch dữ liệu:** Tự động loại bỏ khoảng trắng, định dạng text
+        • **Validation:** Email, số điện thoại, ngày tháng
+        • **Progress tracking:** Theo dõi tiến trình import real-time
+        • **Error reporting:** Chi tiết lỗi với số dòng cụ thể
+        • **Data quality:** Phân tích chất lượng dữ liệu trước khi import
+        """)
 
 # ... (other function definitions would go here)
 

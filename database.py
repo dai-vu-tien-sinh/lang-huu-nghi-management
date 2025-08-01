@@ -2130,3 +2130,90 @@ class Database:
         except Exception as e:
             print(f"Error getting documents: {e}")
             return []
+
+    def create_user(self, username: str, password: str, role: str, full_name: str, 
+                   email: Optional[str] = None, family_student_id: Optional[int] = None) -> bool:
+        """Create a new user"""
+        try:
+            cursor = self.conn.cursor()
+            
+            # Check if username already exists
+            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+            if cursor.fetchone():
+                print(f"Username '{username}' already exists")
+                return False
+            
+            # Hash the password
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            
+            # Insert new user
+            cursor.execute("""
+                INSERT INTO users (username, password_hash, role, full_name, email, family_student_id, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (username, password_hash, role, full_name, email, family_student_id, datetime.now().isoformat()))
+            
+            self.conn.commit()
+            print(f"User '{username}' created successfully")
+            return True
+            
+        except sqlite3.Error as e:
+            print(f"Database error in create_user: {e}")
+            self.conn.rollback()
+            return False
+        except Exception as e:
+            print(f"Error in create_user: {e}")
+            return False
+
+    def update_user(self, user_id: int, full_name: Optional[str] = None, 
+                   email: Optional[str] = None, role: Optional[str] = None, 
+                   new_password: Optional[str] = None) -> bool:
+        """Update user information"""
+        try:
+            cursor = self.conn.cursor()
+            
+            # Check if user exists
+            cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+            if not cursor.fetchone():
+                print(f"User with ID {user_id} not found")
+                return False
+            
+            # Build update query dynamically
+            updates = []
+            params = []
+            
+            if full_name is not None:
+                updates.append("full_name = ?")
+                params.append(full_name)
+            
+            if email is not None:
+                updates.append("email = ?")
+                params.append(email)
+            
+            if role is not None:
+                updates.append("role = ?")
+                params.append(role)
+            
+            if new_password is not None:
+                updates.append("password_hash = ?")
+                params.append(hashlib.sha256(new_password.encode()).hexdigest())
+            
+            if not updates:
+                print("No updates provided")
+                return False
+            
+            # Execute update
+            params.append(user_id)
+            query = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
+            cursor.execute(query, params)
+            
+            self.conn.commit()
+            print(f"User {user_id} updated successfully")
+            return True
+            
+        except sqlite3.Error as e:
+            print(f"Database error in update_user: {e}")
+            self.conn.rollback()
+            return False
+        except Exception as e:
+            print(f"Error in update_user: {e}")
+            return False

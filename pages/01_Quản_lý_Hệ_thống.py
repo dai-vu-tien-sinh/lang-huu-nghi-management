@@ -388,7 +388,7 @@ def user_management_section():
                         'Họ tên': user.full_name,
                         'Vai trò': user.role,
                         'Email': user.email or 'Chưa có',
-                        'Ngày tạo': user.created_at.strftime('%d/%m/%Y') if user.created_at else 'Không xác định'
+                        'Ngày tạo': user.created_at.strftime('%d/%m/%Y') if hasattr(user.created_at, 'strftime') and user.created_at else 'Không xác định'
                     })
                 
                 df = pd.DataFrame(user_data)

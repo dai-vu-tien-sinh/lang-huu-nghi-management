@@ -57,3 +57,13 @@ attached_assets/Pasted-*DATABASE*
 attached_assets/Pasted-*SECRET*
 attached_assets/Pasted-*GOOGLE*
 attached_assets/Pasted-*CREDENTIAL*
+attached_assets/Pasted-*.txt
+
+# Additional security patterns
+**/tmp/
+**/*secret*
+**/*credential*
+**/*oauth*
+**/*token*
+**/DATABASE_URL*
+**/STREAMLIT_DEPLOY_GUIDE.md

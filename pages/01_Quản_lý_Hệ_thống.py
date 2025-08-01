@@ -359,8 +359,437 @@ def database_management_section():
 
 def user_management_section():
     """User management interface for admin users"""
-    # ... (keeping the existing user management code)
-    pass
+    st.subheader("👥 Quản lý người dùng")
+    
+    # Only main admin can access user management
+    if st.session_state.user.username != 'admin':
+        st.warning("🚫 Chỉ tài khoản admin chính mới có thể quản lý người dùng.")
+        return
+    
+    db = Database()
+    
+    # Create tabs for user management
+    user_tabs = st.tabs(["📋 Danh sách người dùng", "➕ Thêm người dùng", "🔧 Chỉnh sửa người dùng"])
+    
+    with user_tabs[0]:
+        st.write("**📋 Danh sách tất cả người dùng:**")
+        
+        # Get all users
+        try:
+            users = db.get_all_users()
+            
+            if users:
+                # Create DataFrame for display
+                user_data = []
+                for user in users:
+                    user_data.append({
+                        'ID': user.id,
+                        'Tên đăng nhập': user.username,
+                        'Họ tên': user.full_name,
+                        'Vai trò': user.role,
+                        'Email': user.email or 'Chưa có',
+                        'Ngày tạo': user.created_at.strftime('%d/%m/%Y') if user.created_at else 'Không xác định'
+                    })
+                
+                df = pd.DataFrame(user_data)
+                st.dataframe(df, use_container_width=True)
+                
+                st.info(f"📊 Tổng số người dùng: {len(users)}")
+                
+            else:
+                st.info("📭 Chưa có người dùng nào trong hệ thống.")
+                
+        except Exception as e:
+            st.error(f"❌ Lỗi khi tải danh sách người dùng: {str(e)}")
+    
+    with user_tabs[1]:
+        st.write("**➕ Thêm người dùng mới:**")
+        
+        with st.form("add_user_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                new_username = st.text_input("Tên đăng nhập *", key="new_username")
+                new_fullname = st.text_input("Họ tên đầy đủ *", key="new_fullname")
+                new_email = st.text_input("Email", key="new_email")
+            
+            with col2:
+                new_password = st.text_input("Mật khẩu *", type="password", key="new_password")
+                new_role = st.selectbox("Vai trò *", 
+                                      ['teacher', 'doctor', 'administrative', 'family'],
+                                      key="new_role")
+                
+                # Family-specific field
+                if new_role == 'family':
+                    students = db.get_all_students()
+                    student_options = {f"{s.full_name} (ID: {s.id})": s.id for s in students}
+                    if student_options:
+                        selected_student = st.selectbox("Học sinh liên quan", 
+                                                       options=list(student_options.keys()),
+                                                       key="family_student")
+                        family_student_id = student_options[selected_student]
+                    else:
+                        st.warning("⚠️ Chưa có học sinh nào trong hệ thống.")
+                        family_student_id = None
+                else:
+                    family_student_id = None
+            
+            submitted = st.form_submit_button("✅ Thêm người dùng", type="primary")
+            
+            if submitted:
+                if not all([new_username, new_fullname, new_password]):
+                    st.error("❌ Vui lòng điền đầy đủ các trường bắt buộc (*)")
+                else:
+                    try:
+                        success = db.create_user(
+                            username=new_username,
+                            password=new_password,
+                            role=new_role,
+                            full_name=new_fullname,
+                            email=new_email if new_email else None,
+                            family_student_id=family_student_id
+                        )
+                        
+                        if success:
+                            st.success(f"✅ Đã thêm người dùng '{new_username}' thành công!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Thêm người dùng thất bại. Tên đăng nhập có thể đã tồn tại.")
+                            
+                    except Exception as e:
+                        st.error(f"❌ Lỗi khi thêm người dùng: {str(e)}")
+    
+    with user_tabs[2]:
+        st.write("**🔧 Chỉnh sửa thông tin người dùng:**")
+        
+        try:
+            users = db.get_all_users()
+            
+            if users:
+                # Select user to edit
+                user_options = {f"{u.full_name} ({u.username})": u.id for u in users}
+                selected_user_display = st.selectbox("Chọn người dùng cần chỉnh sửa:", 
+                                                   options=list(user_options.keys()))
+                
+                if selected_user_display:
+                    user_id = user_options[selected_user_display]
+                    user = db.get_user_by_id(user_id)
+                    
+                    if user:
+                        with st.form("edit_user_form"):
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                edit_username = st.text_input("Tên đăng nhập", value=user.username, disabled=True)
+                                edit_fullname = st.text_input("Họ tên", value=user.full_name)
+                                edit_email = st.text_input("Email", value=user.email or "")
+                            
+                            with col2:
+                                new_password_edit = st.text_input("Mật khẩu mới (để trống nếu không đổi)", 
+                                                                type="password")
+                                edit_role = st.selectbox("Vai trò", 
+                                                        ['admin', 'teacher', 'doctor', 'administrative', 'family'],
+                                                        index=['admin', 'teacher', 'doctor', 'administrative', 'family'].index(user.role))
+                            
+                            col_update, col_delete = st.columns(2)
+                            
+                            with col_update:
+                                update_submitted = st.form_submit_button("💾 Cập nhật", type="primary")
+                            
+                            with col_delete:
+                                if user.username != 'admin':  # Prevent deleting main admin
+                                    delete_submitted = st.form_submit_button("🗑️ Xóa người dùng", 
+                                                                           type="secondary")
+                                else:
+                                    st.info("⚠️ Không thể xóa tài khoản admin chính")
+                                    delete_submitted = False
+                            
+                            if update_submitted:
+                                try:
+                                    success = db.update_user(
+                                        user_id=user_id,
+                                        full_name=edit_fullname,
+                                        email=edit_email if edit_email else None,
+                                        role=edit_role,
+                                        new_password=new_password_edit if new_password_edit else None
+                                    )
+                                    
+                                    if success:
+                                        st.success("✅ Cập nhật thông tin người dùng thành công!")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Cập nhật thất bại!")
+                                        
+                                except Exception as e:
+                                    st.error(f"❌ Lỗi khi cập nhật: {str(e)}")
+                            
+                            if delete_submitted:
+                                try:
+                                    success = db.delete_user(user_id)
+                                    
+                                    if success:
+                                        st.success("✅ Đã xóa người dùng thành công!")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Xóa người dùng thất bại!")
+                                        
+                                except Exception as e:
+                                    st.error(f"❌ Lỗi khi xóa: {str(e)}")
+            
+            else:
+                st.info("📭 Chưa có người dùng nào để chỉnh sửa.")
+                
+        except Exception as e:
+            st.error(f"❌ Lỗi khi tải danh sách người dùng: {str(e)}")
+
+def spreadsheet_management_section():
+    """Spreadsheet-style data management interface"""
+    st.subheader("📊 Quản lý dữ liệu Spreadsheet")
+    
+    db = Database()
+    
+    # Create tabs for different data types
+    data_tabs = st.tabs(["👥 Người dùng", "🎓 Học sinh", "🏛️ Cựu chiến binh", "🏥 Hồ sơ y tế"])
+    
+    with data_tabs[0]:
+        st.write("**👥 Quản lý dữ liệu người dùng:**")
+        
+        try:
+            users = db.get_all_users()
+            
+            if users:
+                # Create editable dataframe
+                user_data = []
+                for user in users:
+                    user_data.append({
+                        'ID': user.id,
+                        'Tên đăng nhập': user.username,
+                        'Họ tên': user.full_name,
+                        'Vai trò': user.role,
+                        'Email': user.email or '',
+                        'Chế độ tối': user.dark_mode if hasattr(user, 'dark_mode') else False
+                    })
+                
+                df = pd.DataFrame(user_data)
+                edited_df = st.data_editor(df, use_container_width=True, num_rows="dynamic")
+                
+                if st.button("💾 Lưu thay đổi người dùng", type="primary"):
+                    st.info("💡 Chức năng lưu trực tiếp từ bảng đang được phát triển. Vui lòng sử dụng tab 'Chỉnh sửa người dùng'.")
+            else:
+                st.info("📭 Chưa có dữ liệu người dùng.")
+                
+        except Exception as e:
+            st.error(f"❌ Lỗi khi tải dữ liệu người dùng: {str(e)}")
+    
+    with data_tabs[1]:
+        st.write("**🎓 Quản lý dữ liệu học sinh:**")
+        
+        try:
+            students = db.get_all_students()
+            
+            if students:
+                student_data = []
+                for student in students:
+                    student_data.append({
+                        'ID': student.id,
+                        'Họ tên': student.full_name,
+                        'Ngày sinh': student.birth_date,
+                        'Địa chỉ': student.address,
+                        'Email': student.email or '',
+                        'Giới tính': getattr(student, 'gender', ''),
+                        'Điện thoại': getattr(student, 'phone', ''),
+                        'Lớp ID': student.class_id or ''
+                    })
+                
+                df = pd.DataFrame(student_data)
+                st.data_editor(df, use_container_width=True, disabled=True)
+                
+                st.info("💡 Để chỉnh sửa thông tin học sinh, vui lòng sử dụng trang 'Quản lý hồ sơ'.")
+            else:
+                st.info("📭 Chưa có dữ liệu học sinh.")
+                
+        except Exception as e:
+            st.error(f"❌ Lỗi khi tải dữ liệu học sinh: {str(e)}")
+    
+    with data_tabs[2]:
+        st.write("**🏛️ Quản lý dữ liệu cựu chiến binh:**")
+        
+        try:
+            veterans = db.get_all_veterans()
+            
+            if veterans:
+                veteran_data = []
+                for veteran in veterans:
+                    veteran_data.append({
+                        'ID': veteran.id,
+                        'Họ tên': veteran.full_name,
+                        'Ngày sinh': veteran.birth_date,
+                        'Địa chỉ': veteran.address,
+                        'Email': veteran.email or '',
+                        'Đơn vị phục vụ': getattr(veteran, 'unit_served', ''),
+                        'Cấp bậc': getattr(veteran, 'rank', '')
+                    })
+                
+                df = pd.DataFrame(veteran_data)
+                st.data_editor(df, use_container_width=True, disabled=True)
+                
+                st.info("💡 Để chỉnh sửa thông tin cựu chiến binh, vui lòng sử dụng trang 'Quản lý hồ sơ'.")
+            else:
+                st.info("📭 Chưa có dữ liệu cựu chiến binh.")
+                
+        except Exception as e:
+            st.error(f"❌ Lỗi khi tải dữ liệu cựu chiến binh: {str(e)}")
+    
+    with data_tabs[3]:
+        st.write("**🏥 Quản lý hồ sơ y tế:**")
+        
+        try:
+            medical_records = db.get_all_medical_records()
+            
+            if medical_records:
+                medical_data = []
+                for record in medical_records:
+                    medical_data.append({
+                        'ID': record.id,
+                        'Bệnh nhân ID': record.student_id,
+                        'Ngày khám': record.examination_date,
+                        'Chẩn đoán': record.diagnosis,
+                        'Điều trị': record.treatment,
+                        'Bác sĩ ID': record.doctor_id
+                    })
+                
+                df = pd.DataFrame(medical_data)
+                st.data_editor(df, use_container_width=True, disabled=True)
+                
+                st.info("💡 Để chỉnh sửa hồ sơ y tế, vui lòng sử dụng trang 'Y tế'.")
+            else:
+                st.info("📭 Chưa có hồ sơ y tế.")
+                
+        except Exception as e:
+            st.error(f"❌ Lỗi khi tải hồ sơ y tế: {str(e)}")
+
+def excel_import_section():
+    """Excel data import functionality"""
+    st.subheader("📥 Nhập dữ liệu từ Excel")
+    
+    db = Database()
+    
+    # File upload
+    uploaded_file = st.file_uploader(
+        "Chọn file Excel để nhập dữ liệu",
+        type=['xlsx', 'xls'],
+        help="Hỗ trợ định dạng .xlsx và .xls"
+    )
+    
+    if uploaded_file:
+        try:
+            # Read Excel file
+            df = pd.read_excel(uploaded_file)
+            
+            st.success(f"✅ Đã tải file Excel thành công! Tìm thấy {len(df)} dòng dữ liệu.")
+            
+            # Show preview
+            st.subheader("👀 Xem trước dữ liệu")
+            st.dataframe(df.head(10), use_container_width=True)
+            
+            # Data type selection
+            st.subheader("📋 Chọn loại dữ liệu")
+            data_type = st.selectbox(
+                "Dữ liệu trong file Excel này là:",
+                ["Học sinh", "Cựu chiến binh", "Người dùng", "Hồ sơ y tế"]
+            )
+            
+            # Column mapping
+            st.subheader("🔗 Ánh xạ cột dữ liệu")
+            
+            excel_columns = list(df.columns)
+            
+            if data_type == "Học sinh":
+                st.write("**Ánh xạ cột cho dữ liệu học sinh:**")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    name_col = st.selectbox("Cột 'Họ tên':", excel_columns, key="name_col")
+                    birth_col = st.selectbox("Cột 'Ngày sinh':", excel_columns, key="birth_col")
+                    address_col = st.selectbox("Cột 'Địa chỉ':", excel_columns, key="address_col")
+                
+                with col2:
+                    email_col = st.selectbox("Cột 'Email':", [""] + excel_columns, key="email_col")
+                    gender_col = st.selectbox("Cột 'Giới tính':", [""] + excel_columns, key="gender_col")
+                    phone_col = st.selectbox("Cột 'Điện thoại':", [""] + excel_columns, key="phone_col")
+                
+                if st.button("📥 Nhập dữ liệu học sinh", type="primary"):
+                    with st.spinner("Đang nhập dữ liệu..."):
+                        try:
+                            success_count = 0
+                            error_count = 0
+                            
+                            for _, row in df.iterrows():
+                                try:
+                                    # Prepare student data
+                                    student_data = {
+                                        'full_name': str(row[name_col]) if pd.notna(row[name_col]) else '',
+                                        'birth_date': str(row[birth_col]) if pd.notna(row[birth_col]) else '',
+                                        'address': str(row[address_col]) if pd.notna(row[address_col]) else '',
+                                        'email': str(row[email_col]) if email_col and pd.notna(row[email_col]) else None,
+                                        'gender': str(row[gender_col]) if gender_col and pd.notna(row[gender_col]) else None,
+                                        'phone': str(row[phone_col]) if phone_col and pd.notna(row[phone_col]) else None
+                                    }
+                                    
+                                    # Create student
+                                    if db.create_student(**student_data):
+                                        success_count += 1
+                                    else:
+                                        error_count += 1
+                                        
+                                except Exception as e:
+                                    error_count += 1
+                                    print(f"Error importing row: {e}")
+                            
+                            st.success(f"✅ Nhập dữ liệu hoàn thành!")
+                            st.info(f"📊 Thành công: {success_count} | Lỗi: {error_count}")
+                            
+                        except Exception as e:
+                            st.error(f"❌ Lỗi khi nhập dữ liệu: {str(e)}")
+            
+            elif data_type == "Người dùng":
+                st.write("**Ánh xạ cột cho dữ liệu người dùng:**")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    username_col = st.selectbox("Cột 'Tên đăng nhập':", excel_columns, key="username_col")
+                    fullname_col = st.selectbox("Cột 'Họ tên':", excel_columns, key="fullname_col")
+                    role_col = st.selectbox("Cột 'Vai trò':", excel_columns, key="role_col")
+                
+                with col2:
+                    password_col = st.selectbox("Cột 'Mật khẩu':", excel_columns, key="password_col")
+                    email_col_user = st.selectbox("Cột 'Email':", [""] + excel_columns, key="email_col_user")
+                
+                if st.button("📥 Nhập dữ liệu người dùng", type="primary"):
+                    st.warning("⚠️ Chức năng nhập người dùng từ Excel cần được triển khai cẩn thận để đảm bảo bảo mật.")
+            
+            else:
+                st.info(f"💡 Chức năng nhập '{data_type}' đang được phát triển.")
+                
+        except Exception as e:
+            st.error(f"❌ Lỗi khi đọc file Excel: {str(e)}")
+    
+    # Import instructions
+    st.subheader("📖 Hướng dẫn nhập dữ liệu")
+    st.info("""
+    **📋 Định dạng file Excel:**
+    • File phải có định dạng .xlsx hoặc .xls
+    • Dòng đầu tiên chứa tên cột
+    • Không có dòng trống giữa dữ liệu
+    
+    **🎓 Dữ liệu học sinh:**
+    • Cột bắt buộc: Họ tên, Ngày sinh, Địa chỉ
+    • Cột tùy chọn: Email, Giới tính, Điện thoại
+    
+    **👥 Dữ liệu người dùng:**
+    • Cột bắt buộc: Tên đăng nhập, Họ tên, Vai trò, Mật khẩu
+    • Vai trò hợp lệ: admin, teacher, doctor, administrative, family
+    """)
 
 # ... (other function definitions would go here)
 
@@ -405,11 +834,11 @@ def render():
 
     with tabs[1]:
         # Spreadsheet data management
-        st.info("Chức năng quản lý dữ liệu spreadsheet")
+        spreadsheet_management_section()
 
     with tabs[2]:
         # Excel data import
-        st.info("Chức năng nhập dữ liệu từ Excel")
+        excel_import_section()
 
     with tabs[3]:
         # Backup and restore

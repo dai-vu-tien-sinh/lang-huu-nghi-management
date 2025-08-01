@@ -11,6 +11,20 @@ import json
 def handle_keep_alive_request():
     """Handle Supabase keep-alive API requests without displaying navigation"""
     try:
+        # Check if DATABASE_URL is configured
+        database_url = os.environ.get('DATABASE_URL')
+        if not database_url:
+            error_response = {
+                "success": False,
+                "timestamp": datetime.now().isoformat(),
+                "error": "DATABASE_URL environment variable not set",
+                "status": "Configuration error - please set DATABASE_URL in Replit Secrets",
+                "service": "Supabase Keep-Alive",
+                "version": "1.0.0"
+            }
+            st.json(error_response)
+            return
+
         # Initialize keep-alive service
         keep_alive = SupabaseKeepAlive()
 
@@ -22,6 +36,7 @@ def handle_keep_alive_request():
             "timestamp": datetime.now().isoformat(),
             "status": "Database keep-alive completed successfully"
             if success else "Keep-alive failed",
+            "messages": messages,
             "service": "Supabase Keep-Alive",
             "version": "1.0.0"
         }
@@ -34,6 +49,28 @@ def handle_keep_alive_request():
             f"Keep-alive API called at {datetime.now()}: {'SUCCESS' if success else 'FAILED'}"
         )
 
+    except ImportError as e:
+        if 'psycopg2' in str(e):
+            error_response = {
+                "success": False,
+                "timestamp": datetime.now().isoformat(),
+                "error": "psycopg2 not installed",
+                "status": "Missing dependency - run: pip install psycopg2-binary",
+                "service": "Supabase Keep-Alive",
+                "version": "1.0.0"
+            }
+        else:
+            error_response = {
+                "success": False,
+                "timestamp": datetime.now().isoformat(),
+                "error": str(e),
+                "status": "Import error",
+                "service": "Supabase Keep-Alive",
+                "version": "1.0.0"
+            }
+        st.json(error_response)
+        print(f"Keep-alive API import error at {datetime.now()}: {str(e)}")
+        
     except Exception as e:
         error_response = {
             "success": False,

@@ -72,23 +72,29 @@ class Database:
         if Database._initialized:
             return
             
-        print("Initializing database...")
-        self.db_path = 'lang_huu_nghi.db'
-        self.backup_dir = 'database_backups'
-        os.makedirs(self.backup_dir, exist_ok=True)
-        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        print("Creating tables...")
-        self.create_tables()
-        print("Creating initial admin...")
-        self.create_initial_admin()
-        print("Creating sample data...")
-        success = self.create_sample_data()
-        if success:
-            print("Sample data created successfully")
-        else:
-            print("Sample data already exists")
-        
-        Database._initialized = True
+        try:
+            print("Initializing database...")
+            self.db_path = 'lang_huu_nghi.db'
+            self.backup_dir = 'database_backups'
+            os.makedirs(self.backup_dir, exist_ok=True)
+            self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
+            print("Creating tables...")
+            self.create_tables()
+            print("Creating initial admin...")
+            self.create_initial_admin()
+            print("Creating sample data...")
+            success = self.create_sample_data()
+            if success:
+                print("Sample data created successfully")
+            else:
+                print("Sample data already exists")
+            
+            Database._initialized = True
+        except Exception as e:
+            print(f"Database initialization error: {e}")
+            if hasattr(self, 'conn'):
+                self.conn.close()
+            raise
 
     def create_tables(self):
         cursor = self.conn.cursor()

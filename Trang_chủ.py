@@ -15,7 +15,7 @@ def handle_keep_alive_request():
         keep_alive = SupabaseKeepAlive()
 
         # Perform the keep-alive operation
-        success = keep_alive.keep_alive()
+        success, messages = keep_alive.run_keep_alive()
 
         response = {
             "success": success,
@@ -73,7 +73,11 @@ def main():
             start_automatic_backups()
             st.session_state.backup_scheduler_started = True
         except Exception as e:
-            print(f"Failed to start backup scheduler: {e}")
+            if "conflicts with an existing job" not in str(e):
+                print(f"Failed to start backup scheduler: {e}")
+            else:
+                # Scheduler already running, mark as started
+                st.session_state.backup_scheduler_started = True
 
     # Initialize keep-alive daemon for deployed environments
     if 'keep_alive_daemon_started' not in st.session_state:

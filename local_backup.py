@@ -267,6 +267,11 @@ class LocalBackup:
     def start_scheduler(self):
         """Start the daily backup scheduler"""
         try:
+            # Check if scheduler is already running
+            if self.scheduler.running:
+                logger.info("Backup scheduler is already running")
+                return
+                
             # Schedule backup every day at 2 AM
             self.scheduler.add_job(
                 func=self.perform_backup,
@@ -280,7 +285,10 @@ class LocalBackup:
             logger.info("Backup scheduler started - backups will run daily at 2:00 AM")
             
         except Exception as e:
-            logger.error(f"Failed to start scheduler: {e}")
+            if "conflicts with an existing job" in str(e):
+                logger.info("Backup scheduler job already exists")
+            else:
+                logger.error(f"Failed to start scheduler: {e}")
     
     def stop_scheduler(self):
         """Stop the backup scheduler"""

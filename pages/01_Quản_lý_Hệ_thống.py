@@ -442,39 +442,120 @@ def user_management_section():
     db = Database()
     
     # Create tabs for user management
-    user_tabs = st.tabs(["📋 Danh sách người dùng", "➕ Thêm người dùng", "🔧 Chỉnh sửa người dùng", "🔑 Xem mật khẩu"])
+    user_tabs = st.tabs(["🔑 Xem mật khẩu", "➕ Thêm người dùng", "🔧 Chỉnh sửa người dùng"])
     
     with user_tabs[0]:
-        st.write("**📋 Danh sách tất cả người dùng:**")
+        st.write("**🔑 Xem mật khẩu người dùng:**")
+        st.warning("⚠️ Chức năng này chỉ dành cho việc khôi phục tài khoản. Vui lòng sử dụng cẩn thận!")
         
-        # Get all users
         try:
-            users = db.get_all_users()
+            # Get user passwords (this uses the existing method)
+            user_passwords = db.get_user_passwords()
             
-            if users:
-                # Create DataFrame for display
-                user_data = []
-                for user in users:
-                    user_data.append({
-                        'ID': user.id,
-                        'Tên đăng nhập': user.username,
-                        'Họ tên': user.full_name,
-                        'Vai trò': user.role,
-                        'Email': user.email or 'Chưa có',
-                        'Ngày tạo': user.created_at.strftime('%d/%m/%Y') if hasattr(user.created_at, 'strftime') and user.created_at else 'Không xác định'
+            if user_passwords:
+                st.write("**📊 Danh sách mật khẩu người dùng:**")
+                
+                # Create password table
+                password_data = []
+                for user_id, user_info in user_passwords.items():
+                    password_data.append({
+                        'ID': user_id,
+                        'Tên đăng nhập': user_info['username'],
+                        'Họ tên': user_info['full_name'],
+                        'Vai trò': user_info['role'],
+                        'Mật khẩu': user_info['password']
                     })
                 
-                df = pd.DataFrame(user_data)
-                st.dataframe(df, use_container_width=True)
+                # Display password table with special formatting
+                df_passwords = pd.DataFrame(password_data)
                 
-                st.info(f"📊 Tổng số người dùng: {len(users)}")
+                # Use data editor to allow copying
+                st.data_editor(
+                    df_passwords,
+                    use_container_width=True,
+                    disabled=True,
+                    hide_index=True
+                )
+                
+                st.info(f"📊 Tổng số tài khoản: {len(user_passwords)}")
+                
+                # Security notice
+                st.error("""
+                🔒 **Lưu ý bảo mật:**
+                • Không chia sẻ thông tin mật khẩu với người khác
+                • Chỉ sử dụng khi cần khôi phục tài khoản
+                • Khuyến nghị người dùng đổi mật khẩu sau khi khôi phục
+                • Mật khẩu được mã hóa trong cơ sở dữ liệu
+                """)
+                
+                # Export passwords option
+                if st.button("📄 Xuất danh sách mật khẩu", help="Xuất ra file để sao lưu"):
+                    # Create export data
+                    export_data = "ID,Tên đăng nhập,Họ tên,Vai trò,Mật khẩu\n"
+                    for user_id, user_info in user_passwords.items():
+                        export_data += f"{user_id},{user_info['username']},{user_info['full_name']},{user_info['role']},{user_info['password']}\n"
+                    
+                    st.download_button(
+                        label="⬇️ Tải file CSV",
+                        data=export_data,
+                        file_name=f"user_passwords_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        mime="text/csv",
+                        help="Tải xuống danh sách mật khẩu dưới dạng CSV"
+                    )
                 
             else:
-                st.info("📭 Chưa có người dùng nào trong hệ thống.")
+                st.info("📭 Không thể lấy thông tin mật khẩu.")
                 
         except Exception as e:
-            st.error(f"❌ Lỗi khi tải danh sách người dùng: {str(e)}")
-    
+            st.error(f"❌ Lỗi khi lấy thông tin mật khẩu: {str(e)}")
+            
+        # Password reset functionality
+        st.subheader("🔄 Đặt lại mật khẩu")
+        
+        with st.form("reset_password_form"):
+            try:
+                users = db.get_all_users()
+                if users:
+                    user_options = {f"{u.full_name} ({u.username})": u.id for u in users}
+                    selected_user_reset = st.selectbox(
+                        "Chọn người dùng cần đặt lại mật khẩu:",
+                        options=list(user_options.keys())
+                    )
+                    
+                    new_password_reset = st.text_input(
+                        "Mật khẩu mới:",
+                        type="password",
+                        help="Nhập mật khẩu mới cho người dùng"
+                    )
+                    
+                    confirm_password = st.text_input(
+                        "Xác nhận mật khẩu:",
+                        type="password",
+                        help="Nhập lại mật khẩu để xác nhận"
+                    )
+                    
+                    reset_submitted = st.form_submit_button("🔄 Đặt lại mật khẩu", type="primary")
+                    
+                    if reset_submitted:
+                        if not new_password_reset:
+                            st.error("❌ Vui lòng nhập mật khẩu mới!")
+                        elif new_password_reset != confirm_password:
+                            st.error("❌ Mật khẩu xác nhận không khớp!")
+                        elif len(new_password_reset) < 6:
+                            st.error("❌ Mật khẩu phải có ít nhất 6 ký tự!")
+                        else:
+                            user_id = user_options[selected_user_reset]
+                            success = db.update_user(user_id=user_id, new_password=new_password_reset)
+                            
+                            if success:
+                                st.success(f"✅ Đã đặt lại mật khẩu cho '{selected_user_reset}' thành công!")
+                                st.info("💡 Vui lòng thông báo mật khẩu mới cho người dùng và yêu cầu họ đổi mật khẩu.")
+                            else:
+                                st.error("❌ Đặt lại mật khẩu thất bại!")
+                
+            except Exception as e:
+                st.error(f"❌ Lỗi khi đặt lại mật khẩu: {str(e)}")
+
     with user_tabs[1]:
         st.write("**➕ Thêm người dùng mới:**")
         
@@ -614,118 +695,6 @@ def user_management_section():
                 
         except Exception as e:
             st.error(f"❌ Lỗi khi tải danh sách người dùng: {str(e)}")
-    
-    with user_tabs[3]:
-        st.write("**🔑 Xem mật khẩu người dùng:**")
-        st.warning("⚠️ Chức năng này chỉ dành cho việc khôi phục tài khoản. Vui lòng sử dụng cẩn thận!")
-        
-        try:
-            # Get user passwords (this uses the existing method)
-            user_passwords = db.get_user_passwords()
-            
-            if user_passwords:
-                st.write("**📊 Danh sách mật khẩu người dùng:**")
-                
-                # Create password table
-                password_data = []
-                for user_id, user_info in user_passwords.items():
-                    password_data.append({
-                        'ID': user_id,
-                        'Tên đăng nhập': user_info['username'],
-                        'Họ tên': user_info['full_name'],
-                        'Vai trò': user_info['role'],
-                        'Mật khẩu': user_info['password']
-                    })
-                
-                # Display password table with special formatting
-                df_passwords = pd.DataFrame(password_data)
-                
-                # Use data editor to allow copying
-                st.data_editor(
-                    df_passwords,
-                    use_container_width=True,
-                    disabled=True,
-                    hide_index=True
-                )
-                
-                st.info(f"📊 Tổng số tài khoản: {len(user_passwords)}")
-                
-                # Security notice
-                st.error("""
-                🔒 **Lưu ý bảo mật:**
-                • Không chia sẻ thông tin mật khẩu với người khác
-                • Chỉ sử dụng khi cần khôi phục tài khoản
-                • Khuyến nghị người dùng đổi mật khẩu sau khi khôi phục
-                • Mật khẩu được mã hóa trong cơ sở dữ liệu
-                """)
-                
-                # Export passwords option
-                if st.button("📄 Xuất danh sách mật khẩu", help="Xuất ra file để sao lưu"):
-                    # Create export data
-                    export_data = "ID,Tên đăng nhập,Họ tên,Vai trò,Mật khẩu\n"
-                    for user_id, user_info in user_passwords.items():
-                        export_data += f"{user_id},{user_info['username']},{user_info['full_name']},{user_info['role']},{user_info['password']}\n"
-                    
-                    st.download_button(
-                        label="⬇️ Tải file CSV",
-                        data=export_data,
-                        file_name=f"user_passwords_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv",
-                        help="Tải xuống danh sách mật khẩu dưới dạng CSV"
-                    )
-                
-            else:
-                st.info("📭 Không thể lấy thông tin mật khẩu.")
-                
-        except Exception as e:
-            st.error(f"❌ Lỗi khi lấy thông tin mật khẩu: {str(e)}")
-            
-        # Password reset functionality
-        st.subheader("🔄 Đặt lại mật khẩu")
-        
-        with st.form("reset_password_form"):
-            try:
-                users = db.get_all_users()
-                if users:
-                    user_options = {f"{u.full_name} ({u.username})": u.id for u in users}
-                    selected_user_reset = st.selectbox(
-                        "Chọn người dùng cần đặt lại mật khẩu:",
-                        options=list(user_options.keys())
-                    )
-                    
-                    new_password_reset = st.text_input(
-                        "Mật khẩu mới:",
-                        type="password",
-                        help="Nhập mật khẩu mới cho người dùng"
-                    )
-                    
-                    confirm_password = st.text_input(
-                        "Xác nhận mật khẩu:",
-                        type="password",
-                        help="Nhập lại mật khẩu để xác nhận"
-                    )
-                    
-                    reset_submitted = st.form_submit_button("🔄 Đặt lại mật khẩu", type="primary")
-                    
-                    if reset_submitted:
-                        if not new_password_reset:
-                            st.error("❌ Vui lòng nhập mật khẩu mới!")
-                        elif new_password_reset != confirm_password:
-                            st.error("❌ Mật khẩu xác nhận không khớp!")
-                        elif len(new_password_reset) < 6:
-                            st.error("❌ Mật khẩu phải có ít nhất 6 ký tự!")
-                        else:
-                            user_id = user_options[selected_user_reset]
-                            success = db.update_user(user_id=user_id, new_password=new_password_reset)
-                            
-                            if success:
-                                st.success(f"✅ Đã đặt lại mật khẩu cho '{selected_user_reset}' thành công!")
-                                st.info("💡 Vui lòng thông báo mật khẩu mới cho người dùng và yêu cầu họ đổi mật khẩu.")
-                            else:
-                                st.error("❌ Đặt lại mật khẩu thất bại!")
-                
-            except Exception as e:
-                st.error(f"❌ Lỗi khi đặt lại mật khẩu: {str(e)}")
 
 def spreadsheet_management_section():
     """Spreadsheet-style data management interface"""

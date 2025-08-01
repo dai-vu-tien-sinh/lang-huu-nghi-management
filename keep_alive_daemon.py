@@ -41,23 +41,44 @@ class KeepAliveDaemon:
         print("🛑 Keep-alive daemon stopped")
         
     def _run_daemon(self):
-        """Main daemon loop"""
-        keep_alive = SupabaseKeepAlive()
+        """Main daemon loop with retry logic"""
+        retry_count = 0
+        max_retries = 3
         
         while self.running:
             try:
+                keep_alive = SupabaseKeepAlive()
                 print(f"🔄 Running keep-alive at {datetime.now()}")
                 success, messages = keep_alive.run_keep_alive()
                 
                 if success:
                     print("✅ Keep-alive successful")
+                    retry_count = 0  # Reset retry count on success
                 else:
                     print("❌ Keep-alive failed")
                     for msg in messages:
                         print(f"   {msg}")
+                    
+                    # Retry logic
+                    retry_count += 1
+                    if retry_count <= max_retries:
+                        print(f"🔄 Retrying in 5 minutes... (attempt {retry_count}/{max_retries})")
+                        time.sleep(300)  # Wait 5 minutes before retry
+                        continue
+                    else:
+                        print(f"❌ Max retries ({max_retries}) reached, waiting for next interval")
+                        retry_count = 0
                         
             except Exception as e:
                 print(f"❌ Keep-alive daemon error: {e}")
+                retry_count += 1
+                if retry_count <= max_retries:
+                    print(f"🔄 Retrying in 5 minutes due to error... (attempt {retry_count}/{max_retries})")
+                    time.sleep(300)
+                    continue
+                else:
+                    print(f"❌ Max retries ({max_retries}) reached after error, waiting for next interval")
+                    retry_count = 0
                 
             # Wait for next interval
             time.sleep(self.interval_seconds)

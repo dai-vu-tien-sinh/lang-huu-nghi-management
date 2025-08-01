@@ -38,9 +38,25 @@ class SupabaseKeepAlive:
         self.other_endpoints = other_endpoints or []
         
         if not self.database_url:
-            raise ValueError("Database URL is required")
-            
+            raise ValueError("Database URL is required. Please set DATABASE_URL environment variable.")
+        
+        # Validate database connection
+        self._validate_connection()
         self.setup_table()
+    
+    def _validate_connection(self):
+        """Validate database connection before setup"""
+        try:
+            with psycopg2.connect(self.database_url) as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    result = cursor.fetchone()
+                    if result[0] != 1:
+                        raise Exception("Connection test failed")
+            logger.info("Database connection validated successfully")
+        except Exception as e:
+            logger.error(f"Database connection validation failed: {e}")
+            raise ConnectionError(f"Cannot connect to database: {e}")
     
     def setup_table(self):
         """Create the keep-alive table if it doesn't exist"""

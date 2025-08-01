@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from datetime import datetime
 from auth import init_auth, check_auth, login, logout
 from database import Database

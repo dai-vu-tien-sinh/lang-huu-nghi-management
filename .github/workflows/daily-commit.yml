@@ -1,0 +1,28 @@
+# .github/workflows/daily-commit.yml
+
+name: Daily Commit
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Append timestamp to commit log
+        run: |
+          echo "✅ Daily commit ran at $(date -u)" >> commit_log.txt
+
+      - name: Commit and push changes
+        run: |
+          git config --global --add safe.directory $(pwd)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add commit_log.txt
+          git commit -m "chore: log daily commit" || echo "No changes to commit"
+          git push

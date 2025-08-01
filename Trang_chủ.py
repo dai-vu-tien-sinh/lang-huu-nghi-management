@@ -75,6 +75,16 @@ def main():
         except Exception as e:
             print(f"Failed to start backup scheduler: {e}")
 
+    # Initialize keep-alive daemon for deployed environments
+    if 'keep_alive_daemon_started' not in st.session_state:
+        try:
+            from keep_alive_daemon import start_keep_alive_daemon
+            if start_keep_alive_daemon():
+                print("Keep-alive daemon started for deployment")
+            st.session_state.keep_alive_daemon_started = True
+        except Exception as e:
+            print(f"Failed to start keep-alive daemon: {e}")
+
     # Handle keep-alive API requests (hidden from regular navigation)
     if st.query_params.get("keep_alive"):
         handle_keep_alive_request()

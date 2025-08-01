@@ -209,20 +209,21 @@ class SupabaseKeepAlive:
         
         return success_count == total_operations, messages
     
-    def start_scheduled_task(self, cron_schedule="0 5 * * 0,3,5"):
+    def start_scheduled_task(self, cron_schedule="0 5 */3 * *"):
         """
         Start the scheduled keep-alive task
         
         Args:
             cron_schedule (str): Cron-like schedule (currently uses simple schedule)
         """
-        # Convert cron to schedule format (simplified)
-        # "0 5 * * 0,3,5" means 5 AM on Sunday, Wednesday, Friday
-        schedule.every().sunday.at("05:00").do(self.run_keep_alive)
-        schedule.every().wednesday.at("05:00").do(self.run_keep_alive)
-        schedule.every().friday.at("05:00").do(self.run_keep_alive)
+        # Run every 3 days to ensure database stays active
+        schedule.every(3).days.at("05:00").do(self.run_keep_alive)
         
-        logger.info("Scheduled keep-alive task started (Sunday, Wednesday, Friday at 5:00 AM)")
+        # Also run daily at different times for extra safety
+        schedule.every().day.at("12:00").do(self.run_keep_alive)
+        schedule.every().day.at("18:00").do(self.run_keep_alive)
+        
+        logger.info("Scheduled keep-alive task started (every 3 days at 5:00 AM + daily at 12:00 PM and 6:00 PM)")
         
         while True:
             schedule.run_pending()

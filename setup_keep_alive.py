@@ -30,9 +30,9 @@ def start_keep_alive_scheduler():
             scheduler_thread.start()
             
             print("🎯 Scheduler started! Keep-alive will run:")
-            print("   - Sunday at 5:00 AM")
-            print("   - Wednesday at 5:00 AM") 
-            print("   - Friday at 5:00 AM")
+            print("   - Every 3 days at 5:00 AM")
+            print("   - Daily at 12:00 PM") 
+            print("   - Daily at 6:00 PM")
             
             return True
         else:

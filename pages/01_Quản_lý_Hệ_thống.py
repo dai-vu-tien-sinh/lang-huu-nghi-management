@@ -8,6 +8,7 @@ import os
 import sqlite3
 import io
 import re
+import time
 from translations import get_text
 import atexit
 
@@ -700,8 +701,110 @@ def check_google_auth_status():
         return {'authenticated': False, 'error': f'Authentication check failed: {e}', 'method': 'unknown'}
 
 def database_management_section():
-    """Google Drive backup management section - cloud deployment safe"""
-    st.subheader("💾 Sao lưu Google Drive (Supabase)")
+    """Backup and restore management section with local and cloud options"""
+    
+    # Local backup section first
+    st.subheader("💾 Sao lưu cục bộ")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📦 Tạo bản sao lưu cục bộ", use_container_width=True):
+            with st.spinner("Đang tạo bản sao lưu..."):
+                try:
+                    from local_backup import LocalBackup
+                    backup_service = LocalBackup()
+                    
+                    # Create backup
+                    backup_path = backup_service.create_database_backup()
+                    
+                    if backup_path:
+                        st.success("✅ Sao lưu cục bộ thành công!")
+                        st.info(f"📂 Vị trí: {backup_path}")
+                        
+                        # Show download option
+                        with open(backup_path, 'rb') as f:
+                            backup_data = f.read()
+                            st.download_button(
+                                label="⬇️ Tải xuống backup",
+                                data=backup_data,
+                                file_name=os.path.basename(backup_path),
+                                mime="application/zip"
+                            )
+                    else:
+                        st.error("❌ Sao lưu thất bại!")
+                        
+                except Exception as e:
+                    st.error(f"❌ Lỗi sao lưu: {str(e)}")
+    
+    with col2:
+        st.write("**📋 Thông tin sao lưu:**")
+        try:
+            from local_backup import LocalBackup
+            backup_service = LocalBackup()
+            backups = backup_service.get_backup_info()
+            
+            if backups:
+                st.write(f"🗂️ Có {len(backups)} bản sao lưu")
+                for backup in backups[-3:]:  # Show last 3 backups
+                    st.write(f"• {backup['filename']} ({backup['size']})")
+            else:
+                st.write("📭 Chưa có bản sao lưu nào")
+                
+        except Exception as e:
+            st.write("⚠️ Không thể kiểm tra thông tin backup")
+    
+    # Restore Section
+    st.subheader("🔄 Khôi phục dữ liệu")
+    
+    # Upload and restore backup
+    uploaded_file = st.file_uploader(
+        "Chọn file backup để khôi phục",
+        type=['zip', 'db'],
+        help="Chọn file backup (.zip hoặc .db) để khôi phục dữ liệu"
+    )
+    
+    if uploaded_file:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.info(f"📁 File đã chọn: {uploaded_file.name}")
+            st.info(f"📊 Kích thước: {uploaded_file.size / 1024 / 1024:.2f} MB")
+        
+        with col2:
+            if st.button("🔄 Khôi phục", type="primary"):
+                with st.spinner("Đang khôi phục dữ liệu..."):
+                    try:
+                        # Save uploaded file temporarily
+                        temp_path = f"temp_restore_{uploaded_file.name}"
+                        with open(temp_path, 'wb') as f:
+                            f.write(uploaded_file.getvalue())
+                        
+                        # Restore from backup
+                        from local_backup import LocalBackup
+                        backup_service = LocalBackup()
+                        
+                        success = backup_service.restore_backup(temp_path)
+                        
+                        # Clean up temp file
+                        os.remove(temp_path)
+                        
+                        if success:
+                            st.success("✅ Khôi phục thành công!")
+                            st.success("🔄 Vui lòng tải lại trang để thấy dữ liệu mới")
+                            st.balloons()
+                            time.sleep(2)
+                            st.rerun()
+                        else:
+                            st.error("❌ Khôi phục thất bại!")
+                            
+                    except Exception as e:
+                        st.error(f"❌ Lỗi khôi phục: {str(e)}")
+                        # Clean up temp file if it exists
+                        if 'temp_path' in locals() and os.path.exists(temp_path):
+                            os.remove(temp_path)
+    
+    # Google Drive backup section
+    st.subheader("☁️ Sao lưu Google Drive (Supabase)")
     
     # Check authentication status safely
     auth_status = check_google_auth_status()

@@ -101,6 +101,7 @@ class LocalBackup:
             for file_path in backup_files:
                 try:
                     file_stat = os.stat(file_path)
+                    size_mb = file_stat.st_size / (1024 * 1024)
                     
                     # Try to read metadata from zip
                     metadata = {}
@@ -114,8 +115,8 @@ class LocalBackup:
                     backup_info = {
                         'filename': os.path.basename(file_path),
                         'path': file_path,
-                        'size': file_stat.st_size,
-                        'created': datetime.fromtimestamp(file_stat.st_mtime),
+                        'size': f"{size_mb:.2f} MB",
+                        'created': datetime.fromtimestamp(file_stat.st_mtime).strftime('%d/%m/%Y %H:%M'),
                         'metadata': metadata
                     }
                     backups.append(backup_info)

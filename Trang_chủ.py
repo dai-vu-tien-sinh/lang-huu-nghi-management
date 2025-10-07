@@ -95,9 +95,25 @@ st.set_page_config(page_title="Hệ thống quản lý dữ liệu Làng Hữu N
 
 
 def render_sidebar():
-    """Render empty sidebar - navigation removed per user request"""
-    # Sidebar navigation completely disabled - user requested removal of menu items
-    pass
+    """Render sidebar with language toggle"""
+    # Language toggle button
+    with st.sidebar:
+        st.markdown("---")
+        current_lang = get_current_language()
+        
+        # Create a toggle button for language
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown("**🌐 Ngôn ngữ / Language:**")
+        with col2:
+            if st.button("🔄", help="Switch Language / Đổi ngôn ngữ", key="lang_toggle"):
+                new_lang = 'en' if current_lang == 'vi' else 'vi'
+                set_language(new_lang)
+                st.rerun()
+        
+        # Display current language
+        lang_display = "🇻🇳 Tiếng Việt" if current_lang == 'vi' else "🇬🇧 English"
+        st.caption(f"Current: {lang_display}")
 
 
 def main():
@@ -208,6 +224,9 @@ def main():
             </div>
             """,
                         unsafe_allow_html=True)
+            
+            # Language toggle button
+            render_sidebar()
 
         # Show restricted access message for family users
         if st.session_state.user.role == 'family':
@@ -221,9 +240,6 @@ def main():
         st.markdown("### 🏥 Chào mừng đến với hệ thống quản lý")
         st.markdown(
             "Sử dụng menu bên trái để truy cập các chức năng của hệ thống.")
-
-        # Render sidebar based on user preferences
-        render_sidebar()
 
         # Logout button at the bottom
         st.sidebar.markdown("---")

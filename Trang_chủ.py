@@ -98,9 +98,12 @@ def render_sidebar():
         # Instructions for translation functionality.
         st.info("""
         **Dịch sang tiếng Anh / Translate to English:**
-        To translate the page, you can right-click anywhere on the page and select "Translate to English" from the context menu.
+        
+        To translate the page, you can right-click anywhere on the page and select "Translate to English" from the browser context menu.
 
         You can also use Google Translate by clicking the "Translate" button in the top-right corner of the browser address bar and selecting "English" as the target language.
+
+        If you have any issues: switch to Microsoft Edge for the best experience.
         """)
 
 def main():

@@ -96,24 +96,33 @@ st.set_page_config(page_title="Hệ thống quản lý dữ liệu Làng Hữu N
 
 def render_sidebar():
     """Render sidebar with language toggle"""
-    # Language toggle button
+    # Language toggle button - triggers browser translation
     with st.sidebar:
         st.markdown("---")
-        current_lang = get_current_language()
         
-        # Create a toggle button for language
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("**🌐 Ngôn ngữ / Language:**")
-        with col2:
-            if st.button("🔄", help="Switch Language / Đổi ngôn ngữ", key="lang_toggle"):
-                new_lang = 'en' if current_lang == 'vi' else 'vi'
-                set_language(new_lang)
-                st.rerun()
-        
-        # Display current language
-        lang_display = "🇻🇳 Tiếng Việt" if current_lang == 'vi' else "🇬🇧 English"
-        st.caption(f"Current: {lang_display}")
+        # Button that triggers browser's translate feature
+        st.markdown("""
+        <div style="text-align: left;">
+            <p style="margin-bottom: 5px;"><strong>🌐 Ngôn ngữ / Language:</strong></p>
+            <button onclick="document.documentElement.lang='en'; window.location.reload();" 
+                    style="
+                        background-color: #274B9F;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    "
+                    onmouseover="this.style.backgroundColor='#1e3a7a'"
+                    onmouseout="this.style.backgroundColor='#274B9F'">
+                🔄 Translate to English
+            </button>
+            <p style="margin-top: 5px; font-size: 12px; color: #666;">
+                Click to use browser translation
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 def main():

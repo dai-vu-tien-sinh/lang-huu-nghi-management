@@ -93,16 +93,22 @@ st.set_page_config(page_title="Hệ thống quản lý dữ liệu Làng Hữu N
                    initial_sidebar_state="expanded",
                    menu_items=None)
 
-# Set page language to Vietnamese immediately using meta tag and html lang attribute
-st.markdown("""
-<meta http-equiv="content-language" content="vi">
+# Set page language to Vietnamese using HTML lang attribute
+# This must be done before any content is rendered
+import streamlit.components.v1 as components
+
+components.html("""
 <script>
-(function() {
-    document.documentElement.setAttribute('lang', 'vi');
+    // Set language attributes on parent document
+    if (window.parent && window.parent.document) {
+        window.parent.document.documentElement.lang = 'vi';
+        window.parent.document.documentElement.setAttribute('xml:lang', 'vi');
+    }
+    // Also set on current document
+    document.documentElement.lang = 'vi';
     document.documentElement.setAttribute('xml:lang', 'vi');
-})();
 </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
 
 def render_sidebar():

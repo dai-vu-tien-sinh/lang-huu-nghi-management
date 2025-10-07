@@ -93,36 +93,30 @@ st.set_page_config(page_title="Hệ thống quản lý dữ liệu Làng Hữu N
                    initial_sidebar_state="expanded",
                    menu_items=None)
 
+# Set page language to Vietnamese for proper browser translation
+st.markdown("""
+<script>
+document.documentElement.lang = 'vi';
+</script>
+""", unsafe_allow_html=True)
+
 
 def render_sidebar():
     """Render sidebar with language toggle"""
     # Language toggle button - triggers browser translation
     with st.sidebar:
         st.markdown("---")
+        st.markdown("**🌐 Ngôn ngữ / Language:**")
         
-        # Button that triggers browser's translate feature
-        st.markdown("""
-        <div style="text-align: left;">
-            <p style="margin-bottom: 5px;"><strong>🌐 Ngôn ngữ / Language:</strong></p>
-            <button onclick="document.documentElement.lang='en'; window.location.reload();" 
-                    style="
-                        background-color: #274B9F;
-                        color: white;
-                        border: none;
-                        padding: 8px 16px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 14px;
-                    "
-                    onmouseover="this.style.backgroundColor='#1e3a7a'"
-                    onmouseout="this.style.backgroundColor='#274B9F'">
-                🔄 Translate to English
-            </button>
-            <p style="margin-top: 5px; font-size: 12px; color: #666;">
-                Click to use browser translation
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Info about browser translation
+        st.info("""
+        **Dịch sang tiếng Anh / Translate to English:**
+        
+        1. Right-click anywhere on the page
+        2. Select "Translate to English"
+        
+        Or use your browser's translate button in the address bar.
+        """)
 
 
 def main():

@@ -93,10 +93,14 @@ st.set_page_config(page_title="Hệ thống quản lý dữ liệu Làng Hữu N
                    initial_sidebar_state="expanded",
                    menu_items=None)
 
-# Set page language to Vietnamese for proper browser translation
+# Set page language to Vietnamese immediately using meta tag and html lang attribute
 st.markdown("""
+<meta http-equiv="content-language" content="vi">
 <script>
-document.documentElement.lang = 'vi';
+(function() {
+    document.documentElement.setAttribute('lang', 'vi');
+    document.documentElement.setAttribute('xml:lang', 'vi');
+})();
 </script>
 """, unsafe_allow_html=True)
 
@@ -187,6 +191,9 @@ def main():
                     unsafe_allow_html=True)
 
     if not st.session_state.authenticated:
+        # Show language info in sidebar before login
+        render_sidebar()
+        
         with st.form("login_form"):
             st.subheader(get_text("login.title"))
             username = st.text_input(get_text("common.username"))
